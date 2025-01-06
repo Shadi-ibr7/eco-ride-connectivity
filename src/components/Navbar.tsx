@@ -1,25 +1,32 @@
 import { Button } from "@/components/ui/button";
 import { Car, Menu, X } from "lucide-react";
 import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 export const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <nav className="bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          <div className="flex items-center">
+          <Link to="/" className="flex items-center">
             <Car className="h-8 w-8 text-ecogreen" />
             <span className="ml-2 text-xl font-bold text-ecogreen">EcoRide</span>
-          </div>
+          </Link>
           
           {/* Desktop menu */}
           <div className="hidden md:flex md:items-center md:space-x-4">
             <Button variant="ghost">Comment ça marche</Button>
             <Button variant="ghost">Proposer un trajet</Button>
             <Button variant="ghost">Rechercher</Button>
-            <Button className="bg-ecogreen hover:bg-ecogreen-light">Connexion</Button>
+            <Button 
+              className="bg-ecogreen hover:bg-ecogreen-light"
+              onClick={() => navigate("/auth")}
+            >
+              Connexion
+            </Button>
           </div>
 
           {/* Mobile menu button */}
@@ -52,7 +59,10 @@ export const Navbar = () => {
             <Button variant="ghost" className="w-full text-left">
               Rechercher
             </Button>
-            <Button className="w-full bg-ecogreen hover:bg-ecogreen-light">
+            <Button 
+              className="w-full bg-ecogreen hover:bg-ecogreen-light"
+              onClick={() => navigate("/auth")}
+            >
               Connexion
             </Button>
           </div>
