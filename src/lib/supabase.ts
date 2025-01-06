@@ -1,10 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Les variables d\'environnement Supabase ne sont pas définies');
-}
+// Remplacez ces valeurs par celles de votre projet Supabase
+// Vous pouvez les trouver dans les paramètres de votre projet Supabase
+// sous "Project Settings" > "API"
+const supabaseUrl = "https://[VOTRE-REFERENCE-PROJET].supabase.co";
+const supabaseKey = "[VOTRE-CLE-ANON-KEY]";
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
