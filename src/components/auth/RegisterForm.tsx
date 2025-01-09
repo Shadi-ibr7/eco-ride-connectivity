@@ -15,7 +15,7 @@ export const RegisterForm = () => {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -25,12 +25,17 @@ export const RegisterForm = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Signup error:", error);
+        throw error;
+      }
 
-      toast.success("Inscription réussie ! Vérifiez vos emails pour confirmer votre compte.");
-    } catch (error) {
-      toast.error("Erreur lors de l'inscription");
-      console.error(error);
+      if (data?.user) {
+        toast.success("Inscription réussie ! Vérifiez vos emails pour confirmer votre compte.");
+      }
+    } catch (error: any) {
+      console.error("Error details:", error);
+      toast.error(error.message || "Erreur lors de l'inscription");
     } finally {
       setIsLoading(false);
     }
