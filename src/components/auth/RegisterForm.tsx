@@ -15,6 +15,7 @@ export const RegisterForm = () => {
     setIsLoading(true);
 
     try {
+      console.log("Starting signup process...");
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
