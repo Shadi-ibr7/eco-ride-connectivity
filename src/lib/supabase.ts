@@ -1,9 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Remplacez ces valeurs par celles de votre projet Supabase
-// Vous pouvez les trouver dans les paramètres de votre projet Supabase
-// sous "Project Settings" > "API"
-const supabaseUrl = "https://example.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example";
+const supabaseUrl = "https://jjkqstovmeudbwisqhmo.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impqa3FzdG92bWV1ZGJ3aXNxaG1vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDc5MjY0MDAsImV4cCI6MjAyMzUwMjQwMH0.qWXu3VxsDLGLx1hrJCJGWZGqbGYwGZNhp7dZMSOBJqY";
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
