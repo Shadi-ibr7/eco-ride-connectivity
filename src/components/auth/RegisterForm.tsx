@@ -27,8 +27,9 @@ export const RegisterForm = () => {
       });
 
       if (error) {
-        console.error("Signup error:", error);
-        throw error;
+        console.error("Signup error:", error.message);
+        toast.error(error.message);
+        return;
       }
 
       if (data?.user) {
@@ -36,7 +37,7 @@ export const RegisterForm = () => {
       }
     } catch (error: any) {
       console.error("Error details:", error);
-      toast.error(error.message || "Erreur lors de l'inscription");
+      toast.error("Erreur lors de l'inscription");
     } finally {
       setIsLoading(false);
     }
