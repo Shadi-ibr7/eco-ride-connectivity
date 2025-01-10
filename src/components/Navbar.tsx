@@ -2,10 +2,20 @@ import { Button } from "@/components/ui/button";
 import { Car, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
+
+  const handleAuthClick = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      navigate("/profile");
+    } else {
+      navigate("/auth");
+    }
+  };
 
   return (
     <nav className="bg-white shadow-sm">
@@ -18,14 +28,20 @@ export const Navbar = () => {
           
           {/* Desktop menu */}
           <div className="hidden md:flex md:items-center md:space-x-4">
-            <Button variant="ghost">Comment ça marche</Button>
-            <Button variant="ghost">Proposer un trajet</Button>
-            <Button variant="ghost">Rechercher</Button>
+            <Button variant="ghost" onClick={() => navigate("/how-it-works")}>
+              Comment ça marche
+            </Button>
+            <Button variant="ghost" onClick={() => navigate("/profile")}>
+              Proposer un trajet
+            </Button>
+            <Button variant="ghost" onClick={() => navigate("/")}>
+              Rechercher
+            </Button>
             <Button 
               className="bg-ecogreen hover:bg-ecogreen-light"
-              onClick={() => navigate("/auth")}
+              onClick={handleAuthClick}
             >
-              Connexion
+              Mon Compte
             </Button>
           </div>
 
@@ -50,20 +66,44 @@ export const Navbar = () => {
       {isMenuOpen && (
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <Button variant="ghost" className="w-full text-left">
+            <Button 
+              variant="ghost" 
+              className="w-full text-left"
+              onClick={() => {
+                navigate("/how-it-works");
+                setIsMenuOpen(false);
+              }}
+            >
               Comment ça marche
             </Button>
-            <Button variant="ghost" className="w-full text-left">
+            <Button 
+              variant="ghost" 
+              className="w-full text-left"
+              onClick={() => {
+                navigate("/profile");
+                setIsMenuOpen(false);
+              }}
+            >
               Proposer un trajet
             </Button>
-            <Button variant="ghost" className="w-full text-left">
+            <Button 
+              variant="ghost" 
+              className="w-full text-left"
+              onClick={() => {
+                navigate("/");
+                setIsMenuOpen(false);
+              }}
+            >
               Rechercher
             </Button>
             <Button 
               className="w-full bg-ecogreen hover:bg-ecogreen-light"
-              onClick={() => navigate("/auth")}
+              onClick={() => {
+                handleAuthClick();
+                setIsMenuOpen(false);
+              }}
             >
-              Connexion
+              Mon Compte
             </Button>
           </div>
         </div>
