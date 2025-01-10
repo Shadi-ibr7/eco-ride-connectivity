@@ -48,6 +48,27 @@ export function CreateRideForm() {
       return;
     }
 
+    // First, check if the profile exists
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", session.user.id)
+      .single();
+
+    // If no profile exists, create one
+    if (!profile) {
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .insert({ id: session.user.id });
+
+      if (profileError) {
+        toast.error("Erreur lors de la création du profil");
+        console.error(profileError);
+        return;
+      }
+    }
+
+    // Now create the ride
     const { error } = await supabase.from("rides").insert({
       departure_city: values.departure_city,
       arrival_city: values.arrival_city,
