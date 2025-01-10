@@ -5,6 +5,7 @@ import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { CreateRideForm } from "@/components/CreateRideForm";
+import { EditRideForm } from "@/components/EditRideForm";
 import {
   Card,
   CardContent,
@@ -12,12 +13,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Pencil, Trash } from "lucide-react";
 
 const Profile = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [userRides, setUserRides] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [editingRide, setEditingRide] = useState<any>(null);
 
   useEffect(() => {
     checkUser();
@@ -137,14 +140,26 @@ const Profile = () => {
                               {ride.description}
                             </p>
                           )}
-                          <Button
-                            onClick={() => handleDeleteRide(ride.id)}
-                            variant="destructive"
-                            size="sm"
-                            className="w-full mt-4"
-                          >
-                            Supprimer
-                          </Button>
+                          <div className="flex gap-2 mt-4">
+                            <Button
+                              onClick={() => setEditingRide(ride)}
+                              variant="outline"
+                              size="sm"
+                              className="flex-1"
+                            >
+                              <Pencil className="w-4 h-4 mr-2" />
+                              Modifier
+                            </Button>
+                            <Button
+                              onClick={() => handleDeleteRide(ride.id)}
+                              variant="destructive"
+                              size="sm"
+                              className="flex-1"
+                            >
+                              <Trash className="w-4 h-4 mr-2" />
+                              Supprimer
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -153,6 +168,15 @@ const Profile = () => {
               )}
             </div>
           </div>
+        )}
+
+        {editingRide && (
+          <EditRideForm
+            ride={editingRide}
+            isOpen={!!editingRide}
+            onClose={() => setEditingRide(null)}
+            onSuccess={loadUserRides}
+          />
         )}
       </div>
     </div>
