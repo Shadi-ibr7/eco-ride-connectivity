@@ -49,11 +49,17 @@ export function CreateRideForm() {
     }
 
     // First, check if the profile exists
-    const { data: profile } = await supabase
+    const { data: profile, error: profileQueryError } = await supabase
       .from("profiles")
       .select("id")
       .eq("id", session.user.id)
-      .single();
+      .maybeSingle();
+
+    if (profileQueryError) {
+      toast.error("Erreur lors de la vérification du profil");
+      console.error(profileQueryError);
+      return;
+    }
 
     // If no profile exists, create one
     if (!profile) {
