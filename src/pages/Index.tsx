@@ -98,7 +98,7 @@ const Index = () => {
         <SearchResults 
           rides={rides}
           showNoResults={!!searchParams}
-          nextAvailableDate={nextAvailableRide?.departure_date}
+          nextAvailableDate={nextAvailableRide ? new Date(nextAvailableRide.departure_date) : undefined}
           onDateChange={handleDateChange}
         />
       </section>
