@@ -30,33 +30,39 @@ export type Database = {
       rides: {
         Row: {
           arrival_city: string
+          arrival_time: string
           created_at: string
           departure_city: string
           departure_date: string
           description: string | null
           id: string
+          is_electric_car: boolean
           price: number
           seats_available: number
           user_id: string
         }
         Insert: {
           arrival_city: string
+          arrival_time?: string
           created_at?: string
           departure_city: string
           departure_date: string
           description?: string | null
           id?: string
+          is_electric_car?: boolean
           price: number
           seats_available: number
           user_id: string
         }
         Update: {
           arrival_city?: string
+          arrival_time?: string
           created_at?: string
           departure_city?: string
           departure_date?: string
           description?: string | null
           id?: string
+          is_electric_car?: boolean
           price?: number
           seats_available?: number
           user_id?: string
