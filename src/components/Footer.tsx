@@ -1,4 +1,5 @@
-import { Car } from "lucide-react";
+import { Car, Mail } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export const Footer = () => {
   return (
@@ -13,20 +14,21 @@ export const Footer = () => {
             <p className="text-gray-400">
               Voyagez de manière écologique et économique grâce au covoiturage.
             </p>
+            <div className="mt-4 flex items-center text-gray-400">
+              <Mail className="h-5 w-5 mr-2" />
+              <a href="mailto:contact@ecoride.fr" className="hover:text-white">
+                contact@ecoride.fr
+              </a>
+            </div>
           </div>
           
           <div>
             <h3 className="text-lg font-semibold mb-4">À propos</h3>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-gray-400 hover:text-white">
-                  Qui sommes-nous
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-400 hover:text-white">
+                <Link to="/how-it-works" className="text-gray-400 hover:text-white">
                   Comment ça marche
-                </a>
+                </Link>
               </li>
               <li>
                 <a href="#" className="text-gray-400 hover:text-white">
@@ -61,19 +63,19 @@ export const Footer = () => {
             <h3 className="text-lg font-semibold mb-4">Légal</h3>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-gray-400 hover:text-white">
+                <Link to="/legal/terms" className="text-gray-400 hover:text-white">
                   Conditions d'utilisation
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-400 hover:text-white">
+                <Link to="/legal/privacy" className="text-gray-400 hover:text-white">
                   Politique de confidentialité
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-gray-400 hover:text-white">
+                <Link to="/legal/mentions" className="text-gray-400 hover:text-white">
                   Mentions légales
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

@@ -6,6 +6,7 @@ import { HowItWorks } from "@/components/HowItWorks";
 import { Footer } from "@/components/Footer";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Car, Leaf, Users } from "lucide-react";
 
 const Index = () => {
   const [searchParams, setSearchParams] = useState<{
@@ -77,7 +78,7 @@ const Index = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      {/* Hero Section */}
+      {/* Hero Section with Search */}
       <section className="relative bg-gradient-to-br from-ecogreen to-ecogreen-light py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center text-white mb-12">
@@ -93,6 +94,75 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Company Presentation */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900">
+              Bienvenue chez EcoRide
+            </h2>
+            <p className="mt-4 text-lg text-gray-600">
+              Votre partenaire de confiance pour des trajets écologiques et économiques
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            <div className="text-center p-6">
+              <div className="w-16 h-16 mx-auto bg-ecogreen rounded-full flex items-center justify-center mb-4">
+                <Leaf className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Écologique</h3>
+              <p className="text-gray-600">
+                Réduisez votre empreinte carbone en partageant vos trajets
+              </p>
+            </div>
+
+            <div className="text-center p-6">
+              <div className="w-16 h-16 mx-auto bg-ecogreen rounded-full flex items-center justify-center mb-4">
+                <Users className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Communautaire</h3>
+              <p className="text-gray-600">
+                Rejoignez une communauté de conducteurs responsables
+              </p>
+            </div>
+
+            <div className="text-center p-6">
+              <div className="w-16 h-16 mx-auto bg-ecogreen rounded-full flex items-center justify-center mb-4">
+                <Car className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Économique</h3>
+              <p className="text-gray-600">
+                Partagez les frais de transport et économisez sur vos déplacements
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div>
+              <img
+                src="/photo-1721322800607-8c38375eef04"
+                alt="Covoiturage écologique"
+                className="rounded-lg shadow-lg w-full h-auto"
+              />
+            </div>
+            <div className="space-y-4">
+              <h3 className="text-2xl font-bold text-gray-900">
+                Notre Mission
+              </h3>
+              <p className="text-gray-600">
+                Chez EcoRide, nous croyons en un avenir où les déplacements sont plus respectueux de l'environnement. 
+                Notre plateforme met en relation des conducteurs et des passagers partageant les mêmes valeurs écologiques.
+              </p>
+              <p className="text-gray-600">
+                En choisissant EcoRide, vous participez activement à la réduction des émissions de CO2 
+                tout en profitant d'une solution de transport économique et conviviale.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Search Results */}
       <section className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         <SearchResults 
@@ -104,37 +174,6 @@ const Index = () => {
       </section>
 
       <HowItWorks />
-
-      {/* Environmental Impact Section */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            Impact environnemental
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="p-6 bg-gray-50 rounded-lg">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                Réduction des émissions
-              </h3>
-              <p className="text-gray-600">
-                En partageant votre trajet, vous contribuez à réduire les émissions de CO2.
-                Chaque covoiturage permet d'économiser en moyenne 2,5kg de CO2.
-              </p>
-            </div>
-            
-            <div className="p-6 bg-gray-50 rounded-lg">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                Mobilité durable
-              </h3>
-              <p className="text-gray-600">
-                Le covoiturage est une solution de mobilité durable qui permet de réduire
-                le nombre de véhicules sur les routes et la pollution atmosphérique.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
 
       <Footer />
     </div>
