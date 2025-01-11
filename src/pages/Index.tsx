@@ -68,7 +68,7 @@ const Index = () => {
     if (searchParams) {
       setSearchParams({
         ...searchParams,
-        date: newDate.toISOString(),
+        date: newDate.toISOString().split('T')[0],
       });
     }
   };
