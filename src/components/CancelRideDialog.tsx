@@ -45,7 +45,7 @@ export const CancelRideDialog = ({
             price,
             seats_available
           `)
-          .eq('id', rideId)
+          .eq('id', rideId as string)
           .maybeSingle();
 
         if (!ride) {
@@ -56,7 +56,7 @@ export const CancelRideDialog = ({
         const { data: bookings } = await supabase
           .from('ride_bookings')
           .select('passenger_id')
-          .eq('ride_id', rideId);
+          .eq('ride_id', rideId as string);
 
         // Refund credits to passengers
         if (bookings) {
@@ -72,13 +72,13 @@ export const CancelRideDialog = ({
         await supabase
           .from('ride_bookings')
           .delete()
-          .eq('ride_id', rideId);
+          .eq('ride_id', rideId as string);
 
         // Delete the ride
         await supabase
           .from('rides')
           .delete()
-          .eq('id', rideId);
+          .eq('id', rideId as string);
 
         // Notify passengers
         const response = await fetch("/api/notify-ride-cancellation", {
@@ -104,7 +104,7 @@ export const CancelRideDialog = ({
               seats_available
             )
           `)
-          .eq('ride_id', rideId)
+          .eq('ride_id', rideId as string)
           .maybeSingle();
 
         if (booking) {
@@ -112,13 +112,13 @@ export const CancelRideDialog = ({
           await supabase
             .from('ride_bookings')
             .delete()
-            .eq('ride_id', rideId);
+            .eq('ride_id', rideId as string);
 
           // Update available seats
           await supabase
             .from('rides')
             .update({ seats_available: (booking.ride as Rides).seats_available + 1 })
-            .eq('id', rideId);
+            .eq('id', rideId as string);
 
           // Refund credits to the passenger
           await supabase.rpc('refund_ride_credits', {
