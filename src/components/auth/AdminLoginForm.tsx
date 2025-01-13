@@ -23,26 +23,8 @@ export const AdminLoginForm = () => {
         return;
       }
 
-      // Vérifier si l'email est autorisé comme admin
-      const { data: adminCheck, error: adminCheckError } = await supabase
-        .from('authorized_admins')
-        .select('email')
-        .eq('email', email)
-        .maybeSingle();
-
-      if (adminCheckError) throw adminCheckError;
-
-      if (!adminCheck) {
-        // Si l'email n'est pas dans authorized_admins, l'ajouter
-        const { error: insertError } = await supabase
-          .from('authorized_admins')
-          .insert([{ email }]);
-
-        if (insertError) throw insertError;
-      }
-
       // Essayer de se connecter d'abord
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data: { session }, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -59,23 +41,35 @@ export const AdminLoginForm = () => {
           }
         });
 
-        if (signUpError) {
-          // Si l'erreur n'est pas "user already exists", la lancer
-          if (!signUpError.message.includes('User already registered')) {
-            throw signUpError;
-          }
-          // Sinon, réessayer de se connecter
-          const { error: retrySignInError } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
-          if (retrySignInError) throw retrySignInError;
-        } else {
-          toast.success("Compte administrateur créé avec succès !");
-        }
+        if (signUpError) throw signUpError;
+        
+        // Réessayer de se connecter après la création du compte
+        const { error: retrySignInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        
+        if (retrySignInError) throw retrySignInError;
       } else if (signInError) {
-        // Si l'erreur n'est pas liée aux identifiants invalides, la lancer
         throw signInError;
+      }
+
+      // Vérifier si l'email est autorisé comme admin
+      const { data: adminCheck, error: adminCheckError } = await supabase
+        .from('authorized_admins')
+        .select('email')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (adminCheckError) throw adminCheckError;
+
+      if (!adminCheck) {
+        // Si l'email n'est pas dans authorized_admins, l'ajouter
+        const { error: insertError } = await supabase
+          .from('authorized_admins')
+          .insert([{ email }]);
+
+        if (insertError) throw insertError;
       }
 
       // Vérifier si le profil existe et a le rôle admin
