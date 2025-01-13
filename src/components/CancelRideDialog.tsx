@@ -32,8 +32,8 @@ export const CancelRideDialog = ({
       if (isDriver) {
         // Get ride details first
         const { data: ride } = await supabase
-          .from("rides")
-          .select("*")
+          .from('rides')
+          .select('*')
           .eq('id', rideId)
           .single();
 
@@ -43,14 +43,14 @@ export const CancelRideDialog = ({
 
         // Get all bookings for this ride
         const { data: bookings } = await supabase
-          .from("ride_bookings")
-          .select("passenger_id")
+          .from('ride_bookings')
+          .select('passenger_id')
           .eq('ride_id', rideId);
 
         // Refund credits to passengers
         if (bookings) {
           for (const booking of bookings) {
-            await supabase.rpc("refund_ride_credits", {
+            await supabase.rpc('refund_ride_credits', {
               user_id: booking.passenger_id,
               amount: ride.price,
             });
@@ -59,13 +59,13 @@ export const CancelRideDialog = ({
 
         // Delete all bookings
         await supabase
-          .from("ride_bookings")
+          .from('ride_bookings')
           .delete()
           .eq('ride_id', rideId);
 
         // Delete the ride
         await supabase
-          .from("rides")
+          .from('rides')
           .delete()
           .eq('id', rideId);
 
@@ -84,26 +84,26 @@ export const CancelRideDialog = ({
       } else {
         // Get the booking and ride details
         const { data: booking } = await supabase
-          .from("ride_bookings")
-          .select("*, ride:rides(*)")
+          .from('ride_bookings')
+          .select('*, ride:rides(*)')
           .eq('ride_id', rideId)
           .single();
 
         if (booking) {
           // Delete the booking
           await supabase
-            .from("ride_bookings")
+            .from('ride_bookings')
             .delete()
             .eq('ride_id', rideId);
 
           // Update available seats
           await supabase
-            .from("rides")
+            .from('rides')
             .update({ seats_available: booking.ride.seats_available + 1 })
             .eq('id', rideId);
 
           // Refund credits to the passenger
-          await supabase.rpc("refund_ride_credits", {
+          await supabase.rpc('refund_ride_credits', {
             user_id: booking.passenger_id,
             amount: booking.ride.price,
           });
