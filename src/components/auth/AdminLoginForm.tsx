@@ -23,6 +23,22 @@ export const AdminLoginForm = () => {
         return;
       }
 
+      // Vérifier si l'email est autorisé comme admin
+      const { data: adminCheck } = await supabase
+        .from('authorized_admins')
+        .select('email')
+        .eq('email', email)
+        .single();
+
+      if (!adminCheck) {
+        // Si l'email n'est pas dans authorized_admins, l'ajouter
+        const { error: insertError } = await supabase
+          .from('authorized_admins')
+          .insert([{ email }]);
+
+        if (insertError) throw insertError;
+      }
+
       // Essayer de se connecter d'abord
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
@@ -60,18 +76,31 @@ export const AdminLoginForm = () => {
         throw signInError;
       }
 
+      // Vérifier si le profil existe et a le rôle admin
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', (await supabase.auth.getSession()).data.session?.user.id)
         .single();
 
-      if (profileError) throw profileError;
-
-      if (profile?.role !== 'admin') {
-        await supabase.auth.signOut();
-        toast.error("Ce compte n'a pas les droits administrateur");
-        return;
+      if (profileError) {
+        // Si le profil n'existe pas, le créer avec le rôle admin
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert([{
+            id: (await supabase.auth.getSession()).data.session?.user.id,
+            role: 'admin'
+          }]);
+        
+        if (insertError) throw insertError;
+      } else if (profile?.role !== 'admin') {
+        // Si le profil existe mais n'a pas le rôle admin, le mettre à jour
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ role: 'admin' })
+          .eq('id', (await supabase.auth.getSession()).data.session?.user.id);
+        
+        if (updateError) throw updateError;
       }
 
       toast.success("Connexion réussie !");
