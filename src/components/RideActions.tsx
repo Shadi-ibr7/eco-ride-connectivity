@@ -4,7 +4,7 @@ import { CancelRideDialog } from "./CancelRideDialog";
 import { useNavigate } from "react-router-dom";
 
 interface RideActionsProps {
-  rideId: string;
+  rideId: string | undefined;
   isDriver: boolean;
   onCancelSuccess?: () => void;
   canBook?: boolean;
