@@ -8,6 +8,7 @@ import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import HowItWorks from "./pages/HowItWorks";
 import Rides from "./pages/Rides";
+import RideDetails from "./pages/RideDetails";
 import Contact from "./pages/Contact";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/profile" element={<Profile />} />
           <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/rides" element={<Rides />} />
+          <Route path="/rides/:id" element={<RideDetails />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

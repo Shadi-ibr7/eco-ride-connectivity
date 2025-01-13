@@ -9,6 +9,48 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      driver_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          driver_id: string
+          id: string
+          rating: number
+          reviewer_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          driver_id: string
+          id?: string
+          rating: number
+          reviewer_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          driver_id?: string
+          id?: string
+          rating?: number
+          reviewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_reviews_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_reviews_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -35,11 +77,14 @@ export type Database = {
           departure_city: string
           departure_date: string
           description: string | null
+          driver_preferences: string[] | null
           id: string
           is_electric_car: boolean
           price: number
           seats_available: number
           user_id: string
+          vehicle_brand: string | null
+          vehicle_model: string | null
         }
         Insert: {
           arrival_city: string
@@ -48,11 +93,14 @@ export type Database = {
           departure_city: string
           departure_date: string
           description?: string | null
+          driver_preferences?: string[] | null
           id?: string
           is_electric_car?: boolean
           price: number
           seats_available: number
           user_id: string
+          vehicle_brand?: string | null
+          vehicle_model?: string | null
         }
         Update: {
           arrival_city?: string
@@ -61,11 +109,14 @@ export type Database = {
           departure_city?: string
           departure_date?: string
           description?: string | null
+          driver_preferences?: string[] | null
           id?: string
           is_electric_car?: boolean
           price?: number
           seats_available?: number
           user_id?: string
+          vehicle_brand?: string | null
+          vehicle_model?: string | null
         }
         Relationships: [
           {

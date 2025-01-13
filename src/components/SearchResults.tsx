@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Zap, User, Calendar, Clock, Star } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 
 interface SearchResultsProps {
   rides: any[];
@@ -13,6 +14,8 @@ interface SearchResultsProps {
 }
 
 export const SearchResults = ({ rides, showNoResults, nextAvailableDate, onDateChange }: SearchResultsProps) => {
+  const navigate = useNavigate();
+
   if (!showNoResults && (!rides || rides.length === 0)) return null;
 
   if (showNoResults && rides.length === 0 && nextAvailableDate) {
@@ -90,7 +93,10 @@ export const SearchResults = ({ rides, showNoResults, nextAvailableDate, onDateC
                   <p className="text-2xl font-bold">{ride.price}€</p>
                   <p className="text-sm text-gray-600">{ride.seats_available} place{ride.seats_available > 1 ? 's' : ''} disponible{ride.seats_available > 1 ? 's' : ''}</p>
                 </div>
-                <Button className="bg-ecogreen hover:bg-ecogreen-light">
+                <Button 
+                  className="bg-ecogreen hover:bg-ecogreen-light"
+                  onClick={() => navigate(`/rides/${ride.id}`)}
+                >
                   Détails
                 </Button>
               </div>
