@@ -1,33 +1,35 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 
-export const EmployeeLoginForm = () => {
+export function EmployeeLoginForm() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setLoading(true);
 
     try {
       // Vérifier si l'email est autorisé
-      const { data: authorizedEmployee } = await supabase
-        .from('authorized_employees')
-        .select('email')
-        .eq('email', email)
+      const { data: authorizedEmployees, error: authError } = await supabase
+        .from("authorized_employees")
+        .select("email")
+        .eq("email", email)
         .single();
 
-      if (!authorizedEmployee) {
-        toast.error("Accès non autorisé");
+      if (authError || !authorizedEmployees) {
+        toast.error("Vous n'êtes pas autorisé à accéder à cette interface");
+        setLoading(false);
         return;
       }
 
+      // Procéder à la connexion
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -35,30 +37,29 @@ export const EmployeeLoginForm = () => {
 
       if (error) throw error;
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', (await supabase.auth.getSession()).data.session?.user.id)
-        .single();
+      // Mettre à jour le rôle de l'utilisateur
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({ role: "employee" })
+          .eq("id", session.user.id);
 
-      if (profile?.role !== 'employee') {
-        await supabase.auth.signOut();
-        toast.error("Ce compte n'a pas les droits employé");
-        return;
+        if (updateError) throw updateError;
       }
 
-      toast.success("Connexion réussie !");
-      navigate('/employee');
-    } catch (error) {
-      toast.error("Erreur lors de la connexion");
-      console.error(error);
+      navigate("/employee");
+      toast.success("Connexion réussie");
+    } catch (error: any) {
+      console.error("Erreur de connexion:", error);
+      toast.error(error.message || "Erreur lors de la connexion");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleLogin} className="space-y-4">
       <div>
         <Input
           type="email"
@@ -77,8 +78,8 @@ export const EmployeeLoginForm = () => {
           required
         />
       </div>
-      <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? "Connexion..." : "Se connecter"}
+      <Button type="submit" className="w-full" disabled={loading}>
+        {loading ? "Connexion..." : "Se connecter"}
       </Button>
     </form>
   );
