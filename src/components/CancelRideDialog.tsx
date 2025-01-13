@@ -36,7 +36,7 @@ export const CancelRideDialog = ({
         // Get ride details first
         const { data: ride } = await supabase
           .from('rides')
-          .select('*')
+          .select()
           .eq('id', rideId)
           .single();
 
@@ -93,7 +93,7 @@ export const CancelRideDialog = ({
             ride:rides(*)
           `)
           .eq('ride_id', rideId)
-          .single();
+          .maybeSingle();
 
         if (booking) {
           // Delete the booking
