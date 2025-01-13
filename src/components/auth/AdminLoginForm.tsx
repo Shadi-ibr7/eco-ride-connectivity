@@ -54,17 +54,17 @@ export const AdminLoginForm = () => {
         throw signInError;
       }
 
-      // Vérifier si l'email est autorisé comme admin
-      const { data: adminCheck, error: adminCheckError } = await supabase
+      // Vérifier si l'email est déjà dans authorized_admins
+      const { data: existingAdmin, error: checkError } = await supabase
         .from('authorized_admins')
         .select('email')
         .eq('email', email)
         .maybeSingle();
 
-      if (adminCheckError) throw adminCheckError;
+      if (checkError) throw checkError;
 
-      if (!adminCheck) {
-        // Si l'email n'est pas dans authorized_admins, l'ajouter
+      // Seulement insérer si l'email n'existe pas déjà
+      if (!existingAdmin) {
         const { error: insertError } = await supabase
           .from('authorized_admins')
           .insert([{ email }]);
