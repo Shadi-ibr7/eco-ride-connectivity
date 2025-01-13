@@ -17,11 +17,11 @@ export const AdminLoginForm = () => {
     setIsLoading(true);
 
     try {
-      // Vérifier si l'email est autorisé
+      // Vérifier si l'email est autorisé (insensible à la casse)
       const { data: authorizedAdmin, error: adminCheckError } = await supabase
         .from('authorized_admins')
         .select('email')
-        .eq('email', email)
+        .ilike('email', email)
         .maybeSingle();
 
       if (adminCheckError) {
@@ -30,6 +30,7 @@ export const AdminLoginForm = () => {
 
       if (!authorizedAdmin) {
         toast.error("Cet email n'est pas autorisé comme administrateur");
+        setIsLoading(false);
         return;
       }
 
