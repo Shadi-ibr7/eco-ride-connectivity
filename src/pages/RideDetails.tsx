@@ -67,7 +67,7 @@ const RideDetails = () => {
             rating,
             comment,
             created_at,
-            reviewer: profiles(name)
+            reviewer:profiles!reviewer_id(name)
           `)
           .eq("driver_id", id)
       ]);
