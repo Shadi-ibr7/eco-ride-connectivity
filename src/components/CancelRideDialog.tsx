@@ -46,7 +46,7 @@ export const CancelRideDialog = ({
             seats_available
           `)
           .eq('id', rideId)
-          .single();
+          .maybeSingle();
 
         if (!ride) {
           throw new Error("Ride not found");
