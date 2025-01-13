@@ -9,6 +9,7 @@ import { Star, User, Calendar, Clock, Zap, Car } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
+import { Tables } from "@/integrations/supabase/types";
 
 type Review = {
   rating: number;
@@ -43,23 +44,33 @@ const RideDetails = () => {
   const { data: ride, isLoading } = useQuery({
     queryKey: ["ride", id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: rideData, error: rideError } = await supabase
         .from("rides")
         .select(`
           *,
-          profile: profiles(name),
-          driver_reviews(
-            rating,
-            comment,
-            created_at,
-            reviewer: profiles(name)
-          )
+          profile: profiles(name)
         `)
         .eq("id", id)
         .single();
 
-      if (error) throw error;
-      return data as RideDetails;
+      if (rideError) throw rideError;
+
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from("driver_reviews")
+        .select(`
+          rating,
+          comment,
+          created_at,
+          reviewer: profiles(name)
+        `)
+        .eq("driver_id", rideData.user_id);
+
+      if (reviewsError) throw reviewsError;
+
+      return {
+        ...rideData,
+        driver_reviews: reviewsData
+      } as RideDetails;
     },
   });
 
