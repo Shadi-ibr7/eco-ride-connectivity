@@ -152,7 +152,7 @@ export type Database = {
         Update: {
           created_at?: string
           credits?: number
-          id: string
+          id?: string
           name?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
         }
@@ -391,7 +391,7 @@ export type Tables<
   TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
     ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
         Database[PublicTableNameOrOptions["schema"]]["Views"])
-    : never,
+    : never = never,
 > = PublicTableNameOrOptions extends { schema: keyof Database }
   ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
       Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
