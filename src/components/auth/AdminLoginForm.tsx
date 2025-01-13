@@ -54,23 +54,15 @@ export const AdminLoginForm = () => {
         throw signInError;
       }
 
-      // Vérifier si l'email est déjà dans authorized_admins
-      const { data: existingAdmin, error: checkError } = await supabase
+      // Utiliser upsert pour gérer l'insertion de manière atomique
+      const { error: upsertError } = await supabase
         .from('authorized_admins')
-        .select('email')
-        .eq('email', email)
-        .maybeSingle();
+        .upsert(
+          { email },
+          { onConflict: 'email', ignoreDuplicates: true }
+        );
 
-      if (checkError) throw checkError;
-
-      // Seulement insérer si l'email n'existe pas déjà
-      if (!existingAdmin) {
-        const { error: insertError } = await supabase
-          .from('authorized_admins')
-          .insert([{ email }]);
-
-        if (insertError) throw insertError;
-      }
+      if (upsertError) throw upsertError;
 
       // Vérifier si le profil existe et a le rôle admin
       const { data: profile, error: profileError } = await supabase
