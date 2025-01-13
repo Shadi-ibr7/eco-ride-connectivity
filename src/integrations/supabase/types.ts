@@ -50,24 +50,30 @@ export type Database = {
           created_at: string
           driver_id: string
           id: string
+          is_positive: boolean | null
           rating: number
           reviewer_id: string
+          status: string
         }
         Insert: {
           comment?: string | null
           created_at?: string
           driver_id: string
           id?: string
+          is_positive?: boolean | null
           rating: number
           reviewer_id: string
+          status?: string
         }
         Update: {
           comment?: string | null
           created_at?: string
           driver_id?: string
           id?: string
+          is_positive?: boolean | null
           rating?: number
           reviewer_id?: string
+          status?: string
         }
         Relationships: [
           {
@@ -159,6 +165,7 @@ export type Database = {
           is_electric_car: boolean
           price: number
           seats_available: number
+          status: string
           user_id: string
           vehicle_brand: string | null
           vehicle_model: string | null
@@ -175,6 +182,7 @@ export type Database = {
           is_electric_car?: boolean
           price: number
           seats_available: number
+          status?: string
           user_id: string
           vehicle_brand?: string | null
           vehicle_model?: string | null
@@ -191,6 +199,7 @@ export type Database = {
           is_electric_car?: boolean
           price?: number
           seats_available?: number
+          status?: string
           user_id?: string
           vehicle_brand?: string | null
           vehicle_model?: string | null

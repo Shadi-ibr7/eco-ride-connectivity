@@ -13,6 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
 import { BookRideDialog } from "@/components/BookRideDialog";
+import { RideStatusActions } from "@/components/RideStatusActions";
+import { RideReviewForm } from "@/components/RideReviewForm";
 
 type Review = {
   rating: number;
@@ -39,6 +41,7 @@ type RideDetails = {
     name: string | null;
   } | null;
   driver_reviews: Review[];
+  status: string;
 };
 
 const RideDetails = () => {
@@ -306,6 +309,30 @@ const RideDetails = () => {
                   </div>
                 </div>
               </>
+            )}
+
+            {/* Add RideStatusActions component */}
+            {ride && session?.user && (
+              <div className="mt-6">
+                <RideStatusActions
+                  rideId={ride.id}
+                  status={ride.status}
+                  isDriver={session.user.id === ride.user_id}
+                  onStatusChange={() => queryClient.invalidateQueries({ queryKey: ["ride", id] })}
+                />
+              </div>
+            )}
+
+            {/* Add RideReviewForm for completed rides */}
+            {ride?.status === "completed" && session?.user && ride.user_id !== session.user.id && (
+              <div className="mt-8">
+                <h3 className="text-lg font-semibold mb-4">Donnez votre avis</h3>
+                <RideReviewForm
+                  rideId={ride.id}
+                  driverId={ride.user_id}
+                  onSubmit={() => queryClient.invalidateQueries({ queryKey: ["ride", id] })}
+                />
+              </div>
             )}
           </CardContent>
         </Card>
