@@ -21,6 +21,7 @@ interface CancelRideDialogProps {
 }
 
 type Rides = Database['public']['Tables']['rides']['Row'];
+type RideBookings = Database['public']['Tables']['ride_bookings']['Row'];
 
 export const CancelRideDialog = ({
   isOpen,
