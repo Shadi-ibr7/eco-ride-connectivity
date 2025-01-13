@@ -24,11 +24,13 @@ export const AdminLoginForm = () => {
       }
 
       // Vérifier si l'email est autorisé comme admin
-      const { data: adminCheck } = await supabase
+      const { data: adminCheck, error: adminCheckError } = await supabase
         .from('authorized_admins')
         .select('email')
         .eq('email', email)
-        .single();
+        .maybeSingle();
+
+      if (adminCheckError) throw adminCheckError;
 
       if (!adminCheck) {
         // Si l'email n'est pas dans authorized_admins, l'ajouter
@@ -81,9 +83,11 @@ export const AdminLoginForm = () => {
         .from('profiles')
         .select('role')
         .eq('id', (await supabase.auth.getSession()).data.session?.user.id)
-        .single();
+        .maybeSingle();
 
-      if (profileError) {
+      if (profileError) throw profileError;
+
+      if (!profile) {
         // Si le profil n'existe pas, le créer avec le rôle admin
         const { error: insertError } = await supabase
           .from('profiles')
@@ -93,7 +97,7 @@ export const AdminLoginForm = () => {
           }]);
         
         if (insertError) throw insertError;
-      } else if (profile?.role !== 'admin') {
+      } else if (profile.role !== 'admin') {
         // Si le profil existe mais n'a pas le rôle admin, le mettre à jour
         const { error: updateError } = await supabase
           .from('profiles')
