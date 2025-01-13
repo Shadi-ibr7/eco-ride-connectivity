@@ -9,7 +9,6 @@ export const AdminLoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isRegistering, setIsRegistering] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -17,68 +16,59 @@ export const AdminLoginForm = () => {
     setIsLoading(true);
 
     try {
-      // Vérifier si l'email est autorisé (insensible à la casse)
-      const { data: authorizedAdmin, error: adminCheckError } = await supabase
-        .from('authorized_admins')
-        .select('email')
-        .ilike('email', email)
-        .maybeSingle();
-
-      if (adminCheckError) {
-        throw adminCheckError;
-      }
-
-      if (!authorizedAdmin) {
-        toast.error("Cet email n'est pas autorisé comme administrateur");
+      // Vérifier si l'email est admin@gmail.com et le mot de passe est "azerty"
+      if (email.toLowerCase() !== 'admin@gmail.com' || password !== 'azerty') {
+        toast.error("Email ou mot de passe incorrect");
         setIsLoading(false);
         return;
       }
 
-      if (isRegistering) {
-        // Inscription
-        const { error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              role: 'admin'
+      // Connexion
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        // Si l'utilisateur n'existe pas encore, on le crée
+        if (signInError.message.includes('Invalid login credentials')) {
+          const { error: signUpError } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              data: {
+                role: 'admin'
+              }
             }
-          }
-        });
+          });
 
-        if (signUpError) throw signUpError;
-        
-        toast.success("Compte créé avec succès ! Vous pouvez maintenant vous connecter.");
-        setIsRegistering(false);
-      } else {
-        // Connexion
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (signInError) throw signInError;
-
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', (await supabase.auth.getSession()).data.session?.user.id)
-          .single();
-
-        if (profileError) throw profileError;
-
-        if (profile?.role !== 'admin') {
-          await supabase.auth.signOut();
-          toast.error("Ce compte n'a pas les droits administrateur");
-          return;
+          if (signUpError) throw signUpError;
+          
+          toast.success("Compte administrateur créé avec succès !");
+        } else {
+          throw signInError;
         }
-
-        toast.success("Connexion réussie !");
-        navigate('/admin');
       }
+
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', (await supabase.auth.getSession()).data.session?.user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      if (profile?.role !== 'admin') {
+        await supabase.auth.signOut();
+        toast.error("Ce compte n'a pas les droits administrateur");
+        return;
+      }
+
+      toast.success("Connexion réussie !");
+      navigate('/admin');
     } catch (error) {
       console.error("Erreur:", error);
-      toast.error(isRegistering ? "Erreur lors de l'inscription" : "Erreur lors de la connexion");
+      toast.error("Erreur lors de la connexion");
     } finally {
       setIsLoading(false);
     }
@@ -105,19 +95,7 @@ export const AdminLoginForm = () => {
         />
       </div>
       <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading 
-          ? (isRegistering ? "Inscription..." : "Connexion...") 
-          : (isRegistering ? "S'inscrire" : "Se connecter")}
-      </Button>
-      <Button
-        type="button"
-        variant="link"
-        className="w-full"
-        onClick={() => setIsRegistering(!isRegistering)}
-      >
-        {isRegistering 
-          ? "Déjà un compte ? Se connecter" 
-          : "Pas de compte ? S'inscrire"}
+        {isLoading ? "Connexion..." : "Se connecter"}
       </Button>
     </form>
   );
