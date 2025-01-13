@@ -10,6 +10,7 @@ import HowItWorks from "./pages/HowItWorks";
 import Rides from "./pages/Rides";
 import RideDetails from "./pages/RideDetails";
 import Contact from "./pages/Contact";
+import Employee from "./pages/Employee";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/rides" element={<Rides />} />
           <Route path="/rides/:id" element={<RideDetails />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/employee" element={<Employee />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

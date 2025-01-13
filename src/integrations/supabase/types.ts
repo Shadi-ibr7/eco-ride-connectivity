@@ -39,6 +39,20 @@ export type Database = {
             foreignKeyName: "driver_preferences_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "problematic_rides"
+            referencedColumns: ["passenger_id"]
+          },
+          {
+            foreignKeyName: "driver_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "problematic_rides"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "driver_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -80,8 +94,36 @@ export type Database = {
             foreignKeyName: "driver_reviews_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
+            referencedRelation: "problematic_rides"
+            referencedColumns: ["passenger_id"]
+          },
+          {
+            foreignKeyName: "driver_reviews_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "problematic_rides"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "driver_reviews_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_reviews_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "problematic_rides"
+            referencedColumns: ["passenger_id"]
+          },
+          {
+            foreignKeyName: "driver_reviews_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "problematic_rides"
+            referencedColumns: ["driver_id"]
           },
           {
             foreignKeyName: "driver_reviews_reviewer_id_fkey"
@@ -140,8 +182,29 @@ export type Database = {
             foreignKeyName: "ride_bookings_passenger_id_fkey"
             columns: ["passenger_id"]
             isOneToOne: false
+            referencedRelation: "problematic_rides"
+            referencedColumns: ["passenger_id"]
+          },
+          {
+            foreignKeyName: "ride_bookings_passenger_id_fkey"
+            columns: ["passenger_id"]
+            isOneToOne: false
+            referencedRelation: "problematic_rides"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "ride_bookings_passenger_id_fkey"
+            columns: ["passenger_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ride_bookings_ride_id_fkey"
+            columns: ["ride_id"]
+            isOneToOne: false
+            referencedRelation: "problematic_rides"
+            referencedColumns: ["ride_id"]
           },
           {
             foreignKeyName: "ride_bookings_ride_id_fkey"
@@ -209,6 +272,20 @@ export type Database = {
             foreignKeyName: "rides_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "problematic_rides"
+            referencedColumns: ["passenger_id"]
+          },
+          {
+            foreignKeyName: "rides_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "problematic_rides"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "rides_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -253,6 +330,20 @@ export type Database = {
             foreignKeyName: "vehicles_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "problematic_rides"
+            referencedColumns: ["passenger_id"]
+          },
+          {
+            foreignKeyName: "vehicles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "problematic_rides"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "vehicles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -260,13 +351,30 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      problematic_rides: {
+        Row: {
+          arrival_city: string | null
+          arrival_time: string | null
+          departure_city: string | null
+          departure_date: string | null
+          driver_email: string | null
+          driver_id: string | null
+          driver_name: string | null
+          is_positive: boolean | null
+          passenger_email: string | null
+          passenger_id: string | null
+          passenger_name: string | null
+          review_comment: string | null
+          ride_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
     }
     Enums: {
-      user_role: "driver" | "passenger" | "both"
+      user_role: "driver" | "passenger" | "both" | "employee"
     }
     CompositeTypes: {
       [_ in never]: never
