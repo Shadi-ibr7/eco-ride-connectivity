@@ -291,6 +291,27 @@ export type Database = {
           },
         ]
       }
+      suspended_users: {
+        Row: {
+          id: string
+          reason: string | null
+          suspended_at: string
+          suspended_by: string | null
+        }
+        Insert: {
+          id: string
+          reason?: string | null
+          suspended_at?: string
+          suspended_by?: string | null
+        }
+        Update: {
+          id?: string
+          reason?: string | null
+          suspended_at?: string
+          suspended_by?: string | null
+        }
+        Relationships: []
+      }
       vehicles: {
         Row: {
           brand: string
@@ -371,10 +392,29 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      get_platform_credits_per_day: {
+        Args: {
+          start_date: string
+          end_date: string
+        }
+        Returns: {
+          date: string
+          credits: number
+        }[]
+      }
+      get_rides_per_day: {
+        Args: {
+          start_date: string
+          end_date: string
+        }
+        Returns: {
+          date: string
+          count: number
+        }[]
+      }
     }
     Enums: {
-      user_role: "driver" | "passenger" | "both" | "employee"
+      user_role: "driver" | "passenger" | "both" | "employee" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never

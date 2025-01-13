@@ -2,36 +2,21 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { CheckCircle, XCircle } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 
 const Employee = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [reviews, setReviews] = useState<any[]>([]);
-  const [problematicRides, setProblematicRides] = useState<any[]>([]);
+  const [ridesData, setRidesData] = useState<any[]>([]);
+  const [creditsData, setCreditsData] = useState<any[]>([]);
+  const [totalCredits, setTotalCredits] = useState(0);
 
   useEffect(() => {
     checkUser();
-    loadReviews();
-    loadProblematicRides();
+    loadData();
   }, []);
 
   const checkUser = async () => {
@@ -45,71 +30,50 @@ const Employee = () => {
       .from("profiles")
       .select("role")
       .eq("id", session.user.id)
-      .single();
+      .maybeSingle();
 
-    if (profile?.role !== "employee") {
+    if (!profile || profile.role !== "employee") {
       navigate("/");
       toast.error("Accès non autorisé");
-      return;
-    }
-
-    setLoading(false);
-  };
-
-  const loadReviews = async () => {
-    const { data, error } = await supabase
-      .from("driver_reviews")
-      .select(`
-        *,
-        reviewer:profiles!driver_reviews_reviewer_id_fkey(name),
-        driver:profiles!driver_reviews_driver_id_fkey(name)
-      `)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      toast.error("Erreur lors du chargement des avis");
     } else {
-      setReviews(data || []);
+      setLoading(false);
     }
   };
 
-  const loadProblematicRides = async () => {
-    const { data, error } = await supabase
-      .from("problematic_rides")
-      .select("*");
+  const loadData = async () => {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 30);
+    const endDate = new Date();
 
-    if (error) {
-      toast.error("Erreur lors du chargement des trajets problématiques");
-    } else {
-      setProblematicRides(data || []);
+    // Charger les données des trajets par jour
+    const { data: rides } = await supabase
+      .rpc('get_rides_per_day', {
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString()
+      });
+    
+    if (rides) {
+      setRidesData(rides.map((item: any) => ({
+        date: new Date(item.date).toLocaleDateString(),
+        count: item.count
+      })));
     }
-  };
 
-  const handleApproveReview = async (reviewId: string) => {
-    const { error } = await supabase
-      .from("driver_reviews")
-      .update({ status: "approved" })
-      .eq("id", reviewId);
+    // Charger les données des crédits par jour
+    const { data: credits } = await supabase
+      .rpc('get_platform_credits_per_day', {
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString()
+      });
 
-    if (error) {
-      toast.error("Erreur lors de l'approbation de l'avis");
-    } else {
-      toast.success("Avis approuvé avec succès");
-      loadReviews();
-    }
-  };
-
-  const handleRejectReview = async (reviewId: string) => {
-    const { error } = await supabase
-      .from("driver_reviews")
-      .update({ status: "rejected" })
-      .eq("id", reviewId);
-
-    if (error) {
-      toast.error("Erreur lors du rejet de l'avis");
-    } else {
-      toast.success("Avis rejeté avec succès");
-      loadReviews();
+    if (credits) {
+      const totalCredits = credits.reduce((acc: number, curr: any) => acc + Number(curr.credits), 0);
+      setTotalCredits(totalCredits);
+      
+      setCreditsData(credits.map((item: any) => ({
+        date: new Date(item.date).toLocaleDateString(),
+        credits: item.credits
+      })));
     }
   };
 
@@ -121,115 +85,52 @@ const Employee = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-8">Interface Employé</h1>
+        <h1 className="text-2xl font-bold mb-8">Tableau de bord employé</h1>
 
-        <Tabs defaultValue="reviews" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="reviews">Avis à modérer</TabsTrigger>
-            <TabsTrigger value="problematic">Trajets problématiques</TabsTrigger>
-          </TabsList>
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Trajets par jour</CardTitle>
+            </CardHeader>
+            <CardContent className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={ridesData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Area type="monotone" dataKey="count" stroke="#8884d8" fill="#8884d8" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
 
-          <TabsContent value="reviews">
-            <Card>
-              <CardHeader>
-                <CardTitle>Avis à modérer</CardTitle>
-                <CardDescription>
-                  Gérez les avis des utilisateurs sur les conducteurs
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Conducteur</TableHead>
-                      <TableHead>Évaluateur</TableHead>
-                      <TableHead>Note</TableHead>
-                      <TableHead>Commentaire</TableHead>
-                      <TableHead>Statut</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {reviews.map((review) => (
-                      <TableRow key={review.id}>
-                        <TableCell>
-                          {new Date(review.created_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>{review.driver?.name}</TableCell>
-                        <TableCell>{review.reviewer?.name}</TableCell>
-                        <TableCell>{review.rating}/5</TableCell>
-                        <TableCell>{review.comment}</TableCell>
-                        <TableCell>{review.status}</TableCell>
-                        <TableCell>
-                          {review.status === "pending" && (
-                            <div className="flex space-x-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleApproveReview(review.id)}
-                              >
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                                Approuver
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleRejectReview(review.id)}
-                              >
-                                <XCircle className="h-4 w-4 mr-1" />
-                                Rejeter
-                              </Button>
-                            </div>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
+          <Card>
+            <CardHeader>
+              <CardTitle>Crédits par jour</CardTitle>
+            </CardHeader>
+            <CardContent className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={creditsData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Area type="monotone" dataKey="credits" stroke="#82ca9d" fill="#82ca9d" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
 
-          <TabsContent value="problematic">
-            <Card>
-              <CardHeader>
-                <CardTitle>Trajets problématiques</CardTitle>
-                <CardDescription>
-                  Consultez les trajets ayant reçu des avis négatifs
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Trajet</TableHead>
-                      <TableHead>Conducteur</TableHead>
-                      <TableHead>Passager</TableHead>
-                      <TableHead>Commentaire</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {problematicRides.map((ride) => (
-                      <TableRow key={ride.ride_id}>
-                        <TableCell>
-                          {new Date(ride.departure_date).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          {ride.departure_city} → {ride.arrival_city}
-                        </TableCell>
-                        <TableCell>{ride.driver_name}</TableCell>
-                        <TableCell>{ride.passenger_name}</TableCell>
-                        <TableCell>{ride.review_comment}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Total des crédits de la plateforme</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-4xl font-bold">{totalCredits} crédits</p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
