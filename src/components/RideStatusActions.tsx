@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Car, CheckCircle } from "lucide-react";
 
 interface RideStatusActionsProps {
   rideId: string;
@@ -27,7 +28,7 @@ export const RideStatusActions = ({
         .eq("id", rideId);
 
       if (error) throw error;
-      toast.success("Le trajet a démarré");
+      toast.success("Le trajet a démarré ! Bonne route !");
       onStatusChange?.();
     } catch (error) {
       console.error("Error starting ride:", error);
@@ -59,7 +60,7 @@ export const RideStatusActions = ({
         console.error("Error sending notifications:", notifyError);
       }
 
-      toast.success("Le trajet est terminé");
+      toast.success("Trajet terminé ! Les passagers ont été notifiés pour laisser leur avis.");
       onStatusChange?.();
     } catch (error) {
       console.error("Error completing ride:", error);
@@ -72,24 +73,38 @@ export const RideStatusActions = ({
   if (!isDriver) return null;
 
   return (
-    <div>
+    <div className="space-y-4">
       {status === "pending" && (
-        <Button
-          onClick={handleStartRide}
-          disabled={isUpdating}
-          className="bg-ecogreen hover:bg-ecogreen-light"
-        >
-          Démarrer le trajet
-        </Button>
+        <div>
+          <Button
+            onClick={handleStartRide}
+            disabled={isUpdating}
+            className="bg-ecogreen hover:bg-ecogreen-light w-full sm:w-auto flex items-center justify-center gap-2"
+            size="lg"
+          >
+            <Car className="h-5 w-5" />
+            Démarrer le trajet
+          </Button>
+          <p className="text-sm text-gray-500 mt-2">
+            Cliquez ici quand tous les passagers sont présents et que vous êtes prêt à partir
+          </p>
+        </div>
       )}
       {status === "in_progress" && (
-        <Button
-          onClick={handleCompleteRide}
-          disabled={isUpdating}
-          className="bg-ecogreen hover:bg-ecogreen-light"
-        >
-          Arrivée à destination
-        </Button>
+        <div>
+          <Button
+            onClick={handleCompleteRide}
+            disabled={isUpdating}
+            className="bg-ecogreen hover:bg-ecogreen-light w-full sm:w-auto flex items-center justify-center gap-2"
+            size="lg"
+          >
+            <CheckCircle className="h-5 w-5" />
+            Arrivée à destination
+          </Button>
+          <p className="text-sm text-gray-500 mt-2">
+            Cliquez ici une fois arrivé à destination pour permettre aux passagers de laisser leur avis
+          </p>
+        </div>
       )}
     </div>
   );
