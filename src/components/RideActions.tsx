@@ -38,16 +38,17 @@ export const RideActions = ({
         {isDriver ? "Annuler le covoiturage" : "Annuler ma participation"}
       </Button>
 
-      <CancelRideDialog
-        isOpen={showCancelDialog}
-        onClose={() => setShowCancelDialog(false)}
-        rideId={rideId}
-        isDriver={isDriver}
-        onSuccess={() => {
-          onCancelSuccess?.();
-          navigate("/profile");
-        }}
-      />
+      {showCancelDialog && (
+        <CancelRideDialog
+          isOpen={showCancelDialog}
+          onClose={() => setShowCancelDialog(false)}
+          rideId={rideId}
+          onSuccess={() => {
+            onCancelSuccess?.();
+            navigate("/profile");
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import EmployeeAuth from "./pages/EmployeeAuth";
 import AdminAuth from "./pages/AdminAuth";
+import Admin from "./pages/Admin";
 import Profile from "./pages/Profile";
 import HowItWorks from "./pages/HowItWorks";
 import Rides from "./pages/Rides";
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/employee/auth" element={<EmployeeAuth />} />
           <Route path="/admin/auth" element={<AdminAuth />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/rides" element={<Rides />} />
