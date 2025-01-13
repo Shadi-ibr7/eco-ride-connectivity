@@ -37,7 +37,7 @@ export const CancelRideDialog = ({
         const { data: ride } = await supabase
           .from('rides')
           .select('*')
-          .eq('id', rideId as string)
+          .eq('id', rideId)
           .single();
 
         if (!ride) {
@@ -48,7 +48,7 @@ export const CancelRideDialog = ({
         const { data: bookings } = await supabase
           .from('ride_bookings')
           .select('passenger_id')
-          .eq('ride_id', rideId as string);
+          .eq('ride_id', rideId);
 
         // Refund credits to passengers
         if (bookings) {
@@ -64,13 +64,13 @@ export const CancelRideDialog = ({
         await supabase
           .from('ride_bookings')
           .delete()
-          .eq('ride_id', rideId as string);
+          .eq('ride_id', rideId);
 
         // Delete the ride
         await supabase
           .from('rides')
           .delete()
-          .eq('id', rideId as string);
+          .eq('id', rideId);
 
         // Notify passengers
         const response = await fetch("/api/notify-ride-cancellation", {
@@ -88,8 +88,11 @@ export const CancelRideDialog = ({
         // Get the booking and ride details
         const { data: booking } = await supabase
           .from('ride_bookings')
-          .select('*, ride:rides(*)')
-          .eq('ride_id', rideId as string)
+          .select(`
+            *,
+            ride:rides(*)
+          `)
+          .eq('ride_id', rideId)
           .single();
 
         if (booking) {
@@ -97,13 +100,13 @@ export const CancelRideDialog = ({
           await supabase
             .from('ride_bookings')
             .delete()
-            .eq('ride_id', rideId as string);
+            .eq('ride_id', rideId);
 
           // Update available seats
           await supabase
             .from('rides')
             .update({ seats_available: (booking.ride as Rides).seats_available + 1 })
-            .eq('id', rideId as string);
+            .eq('id', rideId);
 
           // Refund credits to the passenger
           await supabase.rpc('refund_ride_credits', {
