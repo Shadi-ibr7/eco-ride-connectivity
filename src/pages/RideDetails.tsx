@@ -1,15 +1,18 @@
-import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useParams, useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { Star, User, Calendar, Clock, Zap, Car } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
-import { Tables } from "@/integrations/supabase/types";
+import { toast } from "sonner";
+import { useState } from "react";
+import { BookRideDialog } from "@/components/BookRideDialog";
 
 type Review = {
   rating: number;
@@ -40,41 +43,124 @@ type RideDetails = {
 
 const RideDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [showBookingDialog, setShowBookingDialog] = useState(false);
+  const [userCredits, setUserCredits] = useState<number | null>(null);
 
-  const { data: ride, isLoading } = useQuery({
+  // Fetch ride details and user session
+  const { data: ride, isLoading: isLoadingRide } = useQuery({
     queryKey: ["ride", id],
     queryFn: async () => {
-      const { data: rideData, error: rideError } = await supabase
-        .from("rides")
-        .select(`
-          *,
-          profile: profiles(name)
-        `)
-        .eq("id", id)
-        .single();
+      const [rideResponse, reviewsResponse] = await Promise.all([
+        supabase
+          .from("rides")
+          .select(`
+            *,
+            profile: profiles(name)
+          `)
+          .eq("id", id)
+          .single(),
+        supabase
+          .from("driver_reviews")
+          .select(`
+            rating,
+            comment,
+            created_at,
+            reviewer: profiles(name)
+          `)
+          .eq("driver_id", id)
+      ]);
 
-      if (rideError) throw rideError;
-
-      const { data: reviewsData, error: reviewsError } = await supabase
-        .from("driver_reviews")
-        .select(`
-          rating,
-          comment,
-          created_at,
-          reviewer: profiles(name)
-        `)
-        .eq("driver_id", rideData.user_id);
-
-      if (reviewsError) throw reviewsError;
+      if (rideResponse.error) throw rideResponse.error;
 
       return {
-        ...rideData,
-        driver_reviews: reviewsData
+        ...rideResponse.data,
+        driver_reviews: reviewsResponse.data || []
       } as RideDetails;
     },
   });
 
-  if (isLoading) {
+  // Check user session and credits
+  const { data: session } = useQuery({
+    queryKey: ["session"],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("credits")
+          .eq("id", session.user.id)
+          .single();
+        
+        if (profile) {
+          setUserCredits(profile.credits);
+        }
+      }
+      return session;
+    },
+  });
+
+  // Book ride mutation
+  const bookRideMutation = useMutation({
+    mutationFn: async () => {
+      if (!session?.user || !ride) throw new Error("Not authenticated");
+
+      const { error: bookingError } = await supabase
+        .from("ride_bookings")
+        .insert({
+          ride_id: ride.id,
+          passenger_id: session.user.id,
+        });
+
+      if (bookingError) throw bookingError;
+
+      // Update user credits
+      const { error: creditsError } = await supabase
+        .from("profiles")
+        .update({ credits: (userCredits || 0) - ride.price })
+        .eq("id", session.user.id);
+
+      if (creditsError) throw creditsError;
+
+      // Update available seats
+      const { error: seatsError } = await supabase
+        .from("rides")
+        .update({ seats_available: ride.seats_available - 1 })
+        .eq("id", ride.id);
+
+      if (seatsError) throw seatsError;
+    },
+    onSuccess: () => {
+      toast.success("Réservation confirmée !");
+      queryClient.invalidateQueries({ queryKey: ["ride", id] });
+      setShowBookingDialog(false);
+    },
+    onError: (error) => {
+      console.error("Booking error:", error);
+      toast.error("Erreur lors de la réservation");
+    },
+  });
+
+  const handleBookClick = () => {
+    if (!session) {
+      navigate("/auth");
+      return;
+    }
+
+    if (!userCredits || userCredits < (ride?.price || 0)) {
+      toast.error("Vous n'avez pas assez de crédits");
+      return;
+    }
+
+    setShowBookingDialog(true);
+  };
+
+  const handleBookingConfirm = () => {
+    bookRideMutation.mutate();
+  };
+
+  if (isLoadingRide) {
     return <div>Chargement...</div>;
   }
 
@@ -87,6 +173,8 @@ const RideDetails = () => {
       ride.driver_reviews.length
     : null;
 
+  const canBook = ride.seats_available > 0 && (!session?.user || (userCredits && userCredits >= ride.price));
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -94,7 +182,6 @@ const RideDetails = () => {
       <main className="flex-grow container mx-auto px-4 py-8">
         <Card className="mb-8">
           <CardContent className="p-6">
-            {/* Driver Info */}
             <div className="flex items-center space-x-4 mb-6">
               <Avatar className="h-16 w-16">
                 <User className="h-10 w-10" />
@@ -135,9 +222,23 @@ const RideDetails = () => {
                   {ride.seats_available} place{ride.seats_available > 1 ? 's' : ''} disponible{ride.seats_available > 1 ? 's' : ''}
                 </div>
               </div>
-            </div>
 
-            <Separator className="my-6" />
+              {/* Booking Button */}
+              {canBook && (
+                <Button
+                  className="w-full md:w-auto bg-ecogreen hover:bg-ecogreen-light mt-4"
+                  onClick={handleBookClick}
+                  disabled={bookRideMutation.isPending}
+                >
+                  {bookRideMutation.isPending ? "Réservation en cours..." : "Participer au trajet"}
+                </Button>
+              )}
+              {!canBook && ride.seats_available === 0 && (
+                <p className="text-red-500 mt-4">
+                  Ce trajet est complet
+                </p>
+              )}
+            </div>
 
             {/* Vehicle Details */}
             <div className="space-y-4 mb-6">
@@ -209,6 +310,13 @@ const RideDetails = () => {
           </CardContent>
         </Card>
       </main>
+
+      <BookRideDialog
+        isOpen={showBookingDialog}
+        onClose={() => setShowBookingDialog(false)}
+        onConfirm={handleBookingConfirm}
+        rideCost={ride.price}
+      />
 
       <Footer />
     </div>

@@ -54,20 +54,59 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          credits: number
           id: string
           name: string | null
         }
         Insert: {
           created_at?: string
+          credits?: number
           id: string
           name?: string | null
         }
         Update: {
           created_at?: string
+          credits?: number
           id?: string
           name?: string | null
         }
         Relationships: []
+      }
+      ride_bookings: {
+        Row: {
+          created_at: string
+          id: string
+          passenger_id: string
+          ride_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          passenger_id: string
+          ride_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          passenger_id?: string
+          ride_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ride_bookings_passenger_id_fkey"
+            columns: ["passenger_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ride_bookings_ride_id_fkey"
+            columns: ["ride_id"]
+            isOneToOne: false
+            referencedRelation: "rides"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rides: {
         Row: {
