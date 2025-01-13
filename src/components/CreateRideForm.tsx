@@ -4,6 +4,7 @@ import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 import {
   Form,
   FormControl,
@@ -11,10 +12,18 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const formSchema = z.object({
   departure_city: z.string().min(2, "La ville de départ est requise"),
@@ -23,10 +32,29 @@ const formSchema = z.object({
   price: z.string().min(1, "Le prix est requis"),
   seats_available: z.string().min(1, "Le nombre de places est requis"),
   description: z.string().optional(),
+  vehicle_id: z.string().min(1, "Un véhicule doit être sélectionné"),
 });
 
 export function CreateRideForm() {
   const navigate = useNavigate();
+
+  // Fetch user's vehicles
+  const { data: vehicles = [], isLoading: isLoadingVehicles } = useQuery({
+    queryKey: ["vehicles"],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return [];
+
+      const { data, error } = await supabase
+        .from("vehicles")
+        .select("*")
+        .eq("user_id", session.user.id);
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -36,6 +64,7 @@ export function CreateRideForm() {
       price: "",
       seats_available: "",
       description: "",
+      vehicle_id: "",
     },
   });
 
@@ -48,34 +77,32 @@ export function CreateRideForm() {
       return;
     }
 
-    // First, check if the profile exists
-    const { data: profile, error: profileQueryError } = await supabase
+    // Check if user is a driver
+    const { data: profile } = await supabase
       .from("profiles")
-      .select("id")
+      .select("role, credits")
       .eq("id", session.user.id)
-      .maybeSingle();
+      .single();
 
-    if (profileQueryError) {
-      toast.error("Erreur lors de la vérification du profil");
-      console.error(profileQueryError);
+    if (!profile || (profile.role !== "driver" && profile.role !== "both")) {
+      toast.error("Vous devez être chauffeur pour publier une annonce");
       return;
     }
 
-    // If no profile exists, create one
-    if (!profile) {
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .insert({ id: session.user.id });
-
-      if (profileError) {
-        toast.error("Erreur lors de la création du profil");
-        console.error(profileError);
-        return;
-      }
+    if (profile.credits < 2) {
+      toast.error("Vous n'avez pas assez de crédits (2 crédits requis)");
+      return;
     }
 
-    // Now create the ride
-    const { error } = await supabase.from("rides").insert({
+    // Get selected vehicle details
+    const selectedVehicle = vehicles.find(v => v.id === values.vehicle_id);
+    if (!selectedVehicle) {
+      toast.error("Véhicule non trouvé");
+      return;
+    }
+
+    // Create the ride
+    const { error: rideError } = await supabase.from("rides").insert({
       departure_city: values.departure_city,
       arrival_city: values.arrival_city,
       departure_date: new Date(values.departure_date).toISOString(),
@@ -83,20 +110,66 @@ export function CreateRideForm() {
       seats_available: parseInt(values.seats_available),
       description: values.description,
       user_id: session.user.id,
+      vehicle_brand: selectedVehicle.brand,
+      vehicle_model: selectedVehicle.model,
     });
 
-    if (error) {
+    if (rideError) {
       toast.error("Erreur lors de la publication de l'annonce");
-      console.error(error);
-    } else {
-      toast.success("Annonce publiée avec succès");
-      navigate("/profile");
+      console.error(rideError);
+      return;
     }
+
+    // Deduct platform fee (2 credits)
+    const { error: creditError } = await supabase
+      .from("profiles")
+      .update({ credits: profile.credits - 2 })
+      .eq("id", session.user.id);
+
+    if (creditError) {
+      toast.error("Erreur lors du prélèvement des crédits");
+      console.error(creditError);
+      return;
+    }
+
+    toast.success("Annonce publiée avec succès");
+    navigate("/profile");
   }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="vehicle_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Véhicule</FormLabel>
+              <FormControl>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionnez un véhicule" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vehicles.map((vehicle) => (
+                      <SelectItem key={vehicle.id} value={vehicle.id}>
+                        {vehicle.brand} {vehicle.model} - {vehicle.license_plate}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormDescription>
+                Si vous n'avez pas encore ajouté de véhicule, faites-le depuis votre profil
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={form.control}
           name="departure_city"
@@ -148,6 +221,9 @@ export function CreateRideForm() {
               <FormControl>
                 <Input type="number" placeholder="30" {...field} />
               </FormControl>
+              <FormDescription>
+                2 crédits seront prélevés par la plateforme
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
