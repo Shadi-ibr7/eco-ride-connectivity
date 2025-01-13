@@ -23,32 +23,32 @@ export const AdminLoginForm = () => {
         return;
       }
 
+      // Vérifier si le compte existe déjà
+      const { data: { user }, error: getUserError } = await supabase.auth.getUser();
+      
+      if (!user) {
+        // Si l'utilisateur n'existe pas, on le crée
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              role: 'admin'
+            }
+          }
+        });
+
+        if (signUpError) throw signUpError;
+        toast.success("Compte administrateur créé avec succès !");
+      }
+
       // Connexion
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (signInError) {
-        // Si l'utilisateur n'existe pas encore, on le crée
-        if (signInError.message.includes('Invalid login credentials')) {
-          const { error: signUpError } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              data: {
-                role: 'admin'
-              }
-            }
-          });
-
-          if (signUpError) throw signUpError;
-          
-          toast.success("Compte administrateur créé avec succès !");
-        } else {
-          throw signInError;
-        }
-      }
+      if (signInError) throw signInError;
 
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
