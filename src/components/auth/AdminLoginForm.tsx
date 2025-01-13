@@ -23,11 +23,14 @@ export const AdminLoginForm = () => {
         return;
       }
 
-      // Vérifier si le compte existe déjà
-      const { data: { user }, error: getUserError } = await supabase.auth.getUser();
-      
-      if (!user) {
-        // Si l'utilisateur n'existe pas, on le crée
+      // Essayer de se connecter d'abord
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      // Si la connexion échoue à cause d'identifiants invalides, créer le compte
+      if (signInError && signInError.message.includes('Invalid login credentials')) {
         const { error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -38,17 +41,24 @@ export const AdminLoginForm = () => {
           }
         });
 
-        if (signUpError) throw signUpError;
-        toast.success("Compte administrateur créé avec succès !");
+        if (signUpError) {
+          // Si l'erreur n'est pas "user already exists", la lancer
+          if (!signUpError.message.includes('User already registered')) {
+            throw signUpError;
+          }
+          // Sinon, réessayer de se connecter
+          const { error: retrySignInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+          if (retrySignInError) throw retrySignInError;
+        } else {
+          toast.success("Compte administrateur créé avec succès !");
+        }
+      } else if (signInError) {
+        // Si l'erreur n'est pas liée aux identifiants invalides, la lancer
+        throw signInError;
       }
-
-      // Connexion
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) throw signInError;
 
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
