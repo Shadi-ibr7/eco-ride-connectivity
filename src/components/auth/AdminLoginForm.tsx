@@ -17,29 +17,35 @@ export const AdminLoginForm = () => {
 
     try {
       // Vérifier si l'email est autorisé
-      const { data: authorizedAdmin } = await supabase
+      const { data: authorizedAdmin, error: adminCheckError } = await supabase
         .from('authorized_admins')
         .select('email')
         .eq('email', email)
-        .single();
+        .maybeSingle();
+
+      if (adminCheckError) {
+        throw adminCheckError;
+      }
 
       if (!authorizedAdmin) {
-        toast.error("Accès non autorisé");
+        toast.error("Cet email n'est pas autorisé comme administrateur");
         return;
       }
 
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (signInError) throw signInError;
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', (await supabase.auth.getSession()).data.session?.user.id)
         .single();
+
+      if (profileError) throw profileError;
 
       if (profile?.role !== 'admin') {
         await supabase.auth.signOut();
@@ -50,8 +56,8 @@ export const AdminLoginForm = () => {
       toast.success("Connexion réussie !");
       navigate('/admin');
     } catch (error) {
+      console.error("Erreur lors de la connexion:", error);
       toast.error("Erreur lors de la connexion");
-      console.error(error);
     } finally {
       setIsLoading(false);
     }
