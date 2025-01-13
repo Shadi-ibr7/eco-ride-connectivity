@@ -10,6 +10,33 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 
+type Review = {
+  rating: number;
+  comment: string | null;
+  created_at: string;
+  reviewer: {
+    name: string | null;
+  } | null;
+};
+
+type RideDetails = {
+  id: string;
+  departure_city: string;
+  arrival_city: string;
+  departure_date: string;
+  arrival_time: string;
+  price: number;
+  seats_available: number;
+  vehicle_brand: string | null;
+  vehicle_model: string | null;
+  is_electric_car: boolean;
+  driver_preferences: string[] | null;
+  profile: {
+    name: string | null;
+  } | null;
+  driver_reviews: Review[];
+};
+
 const RideDetails = () => {
   const { id } = useParams();
 
@@ -21,7 +48,7 @@ const RideDetails = () => {
         .select(`
           *,
           profile: profiles(name),
-          driver_reviews: driver_reviews(
+          driver_reviews(
             rating,
             comment,
             created_at,
@@ -32,7 +59,7 @@ const RideDetails = () => {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as RideDetails;
     },
   });
 
@@ -45,7 +72,7 @@ const RideDetails = () => {
   }
 
   const averageRating = ride.driver_reviews?.length
-    ? ride.driver_reviews.reduce((acc: number, review: any) => acc + review.rating, 0) /
+    ? ride.driver_reviews.reduce((acc, review) => acc + review.rating, 0) /
       ride.driver_reviews.length
     : null;
 
@@ -125,7 +152,7 @@ const RideDetails = () => {
                 <div className="space-y-4 mb-6">
                   <h3 className="text-lg font-semibold">Préférences du conducteur</h3>
                   <div className="flex flex-wrap gap-2">
-                    {ride.driver_preferences.map((preference: string, index: number) => (
+                    {ride.driver_preferences.map((preference, index) => (
                       <span
                         key={index}
                         className="px-3 py-1 bg-gray-100 rounded-full text-sm"
@@ -145,8 +172,8 @@ const RideDetails = () => {
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Avis sur le conducteur</h3>
                   <div className="space-y-4">
-                    {ride.driver_reviews.map((review: any) => (
-                      <div key={review.id} className="border-b pb-4 last:border-b-0">
+                    {ride.driver_reviews.map((review, index) => (
+                      <div key={index} className="border-b pb-4 last:border-b-0">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center space-x-2">
                             <span className="font-medium">{review.reviewer?.name || "Anonyme"}</span>
