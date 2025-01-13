@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Database } from "@/integrations/supabase/types";
 
 interface CancelRideDialogProps {
   isOpen: boolean;
@@ -33,7 +34,7 @@ export const CancelRideDialog = ({
         const { data: ride } = await supabase
           .from("rides")
           .select("*")
-          .eq("id", rideId)
+          .eq('id', rideId)
           .single();
 
         if (!ride) {
@@ -44,7 +45,7 @@ export const CancelRideDialog = ({
         const { data: bookings } = await supabase
           .from("ride_bookings")
           .select("passenger_id")
-          .eq("ride_id", rideId);
+          .eq('ride_id', rideId);
 
         // Refund credits to passengers
         if (bookings) {
@@ -60,13 +61,13 @@ export const CancelRideDialog = ({
         await supabase
           .from("ride_bookings")
           .delete()
-          .eq("ride_id", rideId);
+          .eq('ride_id', rideId);
 
         // Delete the ride
         await supabase
           .from("rides")
           .delete()
-          .eq("id", rideId);
+          .eq('id', rideId);
 
         // Notify passengers
         const response = await fetch("/api/notify-ride-cancellation", {
@@ -85,7 +86,7 @@ export const CancelRideDialog = ({
         const { data: booking } = await supabase
           .from("ride_bookings")
           .select("*, ride:rides(*)")
-          .eq("ride_id", rideId)
+          .eq('ride_id', rideId)
           .single();
 
         if (booking) {
@@ -93,13 +94,13 @@ export const CancelRideDialog = ({
           await supabase
             .from("ride_bookings")
             .delete()
-            .eq("ride_id", rideId);
+            .eq('ride_id', rideId);
 
           // Update available seats
           await supabase
             .from("rides")
             .update({ seats_available: booking.ride.seats_available + 1 })
-            .eq("id", rideId);
+            .eq('id', rideId);
 
           // Refund credits to the passenger
           await supabase.rpc("refund_ride_credits", {
