@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Zap, User, Calendar, Clock } from "lucide-react";
+import { Zap, User, Calendar, Clock, Star } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -48,12 +48,20 @@ export const SearchResults = ({ rides, showNoResults, nextAvailableDate, onDateC
                 </Avatar>
                 <div>
                   <p className="font-medium">{ride.profile?.name || "Anonyme"}</p>
-                  {ride.is_electric_car && (
-                    <div className="flex items-center text-green-600 text-sm">
-                      <Zap className="h-4 w-4 mr-1" />
-                      Véhicule électrique
-                    </div>
-                  )}
+                  <div className="flex items-center space-x-2">
+                    {ride.is_electric_car && (
+                      <div className="flex items-center text-green-600 text-sm">
+                        <Zap className="h-4 w-4 mr-1" />
+                        Véhicule électrique
+                      </div>
+                    )}
+                    {ride.driver_rating && (
+                      <div className="flex items-center text-yellow-500 text-sm">
+                        <Star className="h-4 w-4 mr-1" />
+                        {ride.driver_rating.toFixed(1)}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
