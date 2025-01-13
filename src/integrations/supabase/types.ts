@@ -9,6 +9,41 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      driver_preferences: {
+        Row: {
+          created_at: string
+          custom_preferences: string[] | null
+          id: string
+          pets_allowed: boolean
+          smoking_allowed: boolean
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          custom_preferences?: string[] | null
+          id?: string
+          pets_allowed?: boolean
+          smoking_allowed?: boolean
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          custom_preferences?: string[] | null
+          id?: string
+          pets_allowed?: boolean
+          smoking_allowed?: boolean
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       driver_reviews: {
         Row: {
           comment: string | null
@@ -57,18 +92,21 @@ export type Database = {
           credits: number
           id: string
           name: string | null
+          role: Database["public"]["Enums"]["user_role"] | null
         }
         Insert: {
           created_at?: string
           credits?: number
           id: string
           name?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
         }
         Update: {
           created_at?: string
           credits?: number
           id?: string
           name?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
         }
         Relationships: []
       }
@@ -167,6 +205,50 @@ export type Database = {
           },
         ]
       }
+      vehicles: {
+        Row: {
+          brand: string
+          color: string
+          created_at: string
+          first_registration_date: string
+          id: string
+          license_plate: string
+          model: string
+          seats: number
+          user_id: string | null
+        }
+        Insert: {
+          brand: string
+          color: string
+          created_at?: string
+          first_registration_date: string
+          id?: string
+          license_plate: string
+          model: string
+          seats: number
+          user_id?: string | null
+        }
+        Update: {
+          brand?: string
+          color?: string
+          created_at?: string
+          first_registration_date?: string
+          id?: string
+          license_plate?: string
+          model?: string
+          seats?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -175,7 +257,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      user_role: "driver" | "passenger" | "both"
     }
     CompositeTypes: {
       [_ in never]: never
