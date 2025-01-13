@@ -5,7 +5,6 @@ import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 
 const Employee = () => {
   const navigate = useNavigate();
@@ -22,7 +21,7 @@ const Employee = () => {
   const checkUser = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      navigate("/auth");
+      navigate("/employee/auth");
       return;
     }
 
@@ -33,7 +32,7 @@ const Employee = () => {
       .maybeSingle();
 
     if (!profile || profile.role !== "employee") {
-      navigate("/");
+      navigate("/employee/auth");
       toast.error("Accès non autorisé");
     } else {
       setLoading(false);
