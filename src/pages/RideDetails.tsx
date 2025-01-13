@@ -27,6 +27,7 @@ type Review = {
 
 type RideDetails = {
   id: string;
+  user_id: string;  // Ajout de user_id
   departure_city: string;
   arrival_city: string;
   departure_date: string;

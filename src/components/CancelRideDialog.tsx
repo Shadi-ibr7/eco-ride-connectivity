@@ -15,7 +15,7 @@ import { Database } from "@/integrations/supabase/types";
 interface CancelRideDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  rideId: string;
+  rideId: string | undefined;
   isDriver: boolean;
   onSuccess?: () => void;
 }
