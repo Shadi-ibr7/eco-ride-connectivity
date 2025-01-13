@@ -17,6 +17,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Pencil, Trash } from "lucide-react";
+import { Database } from "@/integrations/supabase/types";
+
+type UserRole = Database['public']['Enums']['user_role'];
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -24,7 +27,7 @@ const Profile = () => {
   const [userRides, setUserRides] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingRide, setEditingRide] = useState<any>(null);
-  const [userRole, setUserRole] = useState<"passenger" | "driver" | "both" | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
 
   useEffect(() => {
     checkUser();
@@ -92,8 +95,11 @@ const Profile = () => {
     navigate("/auth");
   };
 
-  const handleRoleChange = (newRole: typeof userRole) => {
+  const handleRoleChange = (newRole: UserRole) => {
     setUserRole(newRole);
+    if (newRole === 'employee') {
+      navigate('/employee');
+    }
   };
 
   if (loading) {

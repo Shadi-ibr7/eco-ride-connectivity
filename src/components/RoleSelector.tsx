@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Car, User, UserRound } from "lucide-react";
+import { Car, User, UserRound, Shield } from "lucide-react";
 import { toast } from "sonner";
+import { Database } from "@/integrations/supabase/types";
 
-type Role = "passenger" | "driver" | "both";
+type Role = Database['public']['Enums']['user_role'];
 
 interface RoleSelectorProps {
   currentRole?: Role | null;
@@ -51,6 +52,10 @@ export function RoleSelector({ currentRole, onRoleChange }: RoleSelectorProps) {
         <ToggleGroupItem value="both" aria-label="Les deux">
           <UserRound className="h-4 w-4 mr-2" />
           Les deux
+        </ToggleGroupItem>
+        <ToggleGroupItem value="employee" aria-label="Employé">
+          <Shield className="h-4 w-4 mr-2" />
+          Employé
         </ToggleGroupItem>
       </ToggleGroup>
     </div>

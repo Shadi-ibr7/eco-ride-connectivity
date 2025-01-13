@@ -21,7 +21,6 @@ interface CancelRideDialogProps {
 }
 
 type Rides = Database['public']['Tables']['rides']['Row'];
-type RideBookings = Database['public']['Tables']['ride_bookings']['Row'];
 
 export const CancelRideDialog = ({
   isOpen,
@@ -41,11 +40,7 @@ export const CancelRideDialog = ({
         // Get ride details first
         const { data: ride } = await supabase
           .from('rides')
-          .select(`
-            id,
-            price,
-            seats_available
-          `)
+          .select('id, price, seats_available')
           .eq('id', rideId)
           .maybeSingle();
 
