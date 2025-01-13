@@ -9,6 +9,7 @@ export const AdminLoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,32 +33,51 @@ export const AdminLoginForm = () => {
         return;
       }
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      if (isRegistering) {
+        // Inscription
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              role: 'admin'
+            }
+          }
+        });
 
-      if (signInError) throw signInError;
+        if (signUpError) throw signUpError;
+        
+        toast.success("Compte créé avec succès ! Vous pouvez maintenant vous connecter.");
+        setIsRegistering(false);
+      } else {
+        // Connexion
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', (await supabase.auth.getSession()).data.session?.user.id)
-        .single();
+        if (signInError) throw signInError;
 
-      if (profileError) throw profileError;
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', (await supabase.auth.getSession()).data.session?.user.id)
+          .single();
 
-      if (profile?.role !== 'admin') {
-        await supabase.auth.signOut();
-        toast.error("Ce compte n'a pas les droits administrateur");
-        return;
+        if (profileError) throw profileError;
+
+        if (profile?.role !== 'admin') {
+          await supabase.auth.signOut();
+          toast.error("Ce compte n'a pas les droits administrateur");
+          return;
+        }
+
+        toast.success("Connexion réussie !");
+        navigate('/admin');
       }
-
-      toast.success("Connexion réussie !");
-      navigate('/admin');
     } catch (error) {
-      console.error("Erreur lors de la connexion:", error);
-      toast.error("Erreur lors de la connexion");
+      console.error("Erreur:", error);
+      toast.error(isRegistering ? "Erreur lors de l'inscription" : "Erreur lors de la connexion");
     } finally {
       setIsLoading(false);
     }
@@ -84,7 +104,19 @@ export const AdminLoginForm = () => {
         />
       </div>
       <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? "Connexion..." : "Se connecter"}
+        {isLoading 
+          ? (isRegistering ? "Inscription..." : "Connexion...") 
+          : (isRegistering ? "S'inscrire" : "Se connecter")}
+      </Button>
+      <Button
+        type="button"
+        variant="link"
+        className="w-full"
+        onClick={() => setIsRegistering(!isRegistering)}
+      >
+        {isRegistering 
+          ? "Déjà un compte ? Se connecter" 
+          : "Pas de compte ? S'inscrire"}
       </Button>
     </form>
   );
