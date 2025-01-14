@@ -95,30 +95,19 @@ export const AddEmployeeForm = ({ onEmployeeAdded }: AddEmployeeFormProps) => {
     setIsLoading(true);
 
     try {
-      // First check if the email is already in authorized_employees
-      const { data: existingEmployees, error: queryError } = await supabase
+      // Vérifier si l'employé existe déjà
+      const { data: existingEmployee } = await supabase
         .from("authorized_employees")
         .select("email")
         .eq("email", newEmployeeEmail)
-        .single();
+        .maybeSingle();
 
-      if (queryError && queryError.code !== 'PGRST116') {
-        throw queryError;
-      }
-
-      if (existingEmployees) {
+      if (existingEmployee) {
         toast.error("Cet employé est déjà autorisé");
         return;
       }
 
-      // Add to authorized_employees first
-      const { error: insertError } = await supabase
-        .from("authorized_employees")
-        .insert([{ email: newEmployeeEmail }]);
-
-      if (insertError) throw insertError;
-
-      // Then try to sign up the user
+      // Créer le compte utilisateur
       const { error: signUpError } = await supabase.auth.signUp({
         email: newEmployeeEmail,
         password: newEmployeePassword,
@@ -130,23 +119,29 @@ export const AddEmployeeForm = ({ onEmployeeAdded }: AddEmployeeFormProps) => {
         }
       });
 
-      if (signUpError) throw signUpError;
+      if (signUpError) {
+        if (signUpError.message === "User already registered") {
+          toast.error("Un compte existe déjà avec cet email");
+        } else {
+          throw signUpError;
+        }
+        return;
+      }
 
-      toast.success("Employé autorisé ajouté avec succès");
+      // Ajouter aux employés autorisés
+      const { error: insertError } = await supabase
+        .from("authorized_employees")
+        .insert([{ email: newEmployeeEmail }]);
+
+      if (insertError) throw insertError;
+
+      toast.success("Employé ajouté avec succès");
       setNewEmployeeEmail("");
       setNewEmployeePassword("");
       onEmployeeAdded();
     } catch (error: any) {
       console.error("Erreur lors de l'ajout de l'employé:", error);
-      toast.error(error.message || "Erreur lors de l'ajout de l'employé");
-      
-      // If there was an error during signup, remove from authorized_employees
-      if (error.message !== "User already registered") {
-        await supabase
-          .from("authorized_employees")
-          .delete()
-          .eq("email", newEmployeeEmail);
-      }
+      toast.error("Erreur lors de l'ajout de l'employé");
     } finally {
       setIsLoading(false);
     }
