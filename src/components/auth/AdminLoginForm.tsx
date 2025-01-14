@@ -59,7 +59,7 @@ export const AdminLoginForm = () => {
         .from('authorized_admins')
         .upsert(
           { email },
-          { onConflict: 'email', ignoreDuplicates: true }
+          { onConflict: 'email' }
         );
 
       if (upsertError) throw upsertError;
@@ -69,7 +69,7 @@ export const AdminLoginForm = () => {
         .from('profiles')
         .select('role')
         .eq('id', (await supabase.auth.getSession()).data.session?.user.id)
-        .maybeSingle();
+        .single();
 
       if (profileError) throw profileError;
 
