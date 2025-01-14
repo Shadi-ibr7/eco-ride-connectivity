@@ -53,13 +53,16 @@ export const EmployeeLoginForm = () => {
 
     try {
       const { error } = await supabase.auth.updateUser({
-        password: newPassword
+        password: newPassword,
+        data: {
+          is_temporary_password: false
+        }
       });
 
       if (error) throw error;
 
       toast.success("Mot de passe mis à jour avec succès");
-      navigate("/employee");
+      navigate("/employee", { replace: true });
     } catch (error) {
       console.error("Error updating password:", error);
       toast.error("Erreur lors de la mise à jour du mot de passe");
