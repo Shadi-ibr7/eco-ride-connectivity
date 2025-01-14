@@ -23,6 +23,7 @@ import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from "recharts";
 import { subDays, format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { z } from "zod";
+import { AuthError } from "@supabase/supabase-js";
 
 const chartConfig = {
   rides: {
@@ -226,23 +227,23 @@ const Admin = () => {
         }
       });
 
-      if (signUpError) {
-        // If user exists, we'll just add them to authorized_employees
-        if (signUpError.message === "User already registered") {
-          const { error: dbError } = await supabase
-            .from("authorized_employees")
-            .insert([{ email: newEmployeeEmail }]);
+      // If user exists but not in authorized_employees, add them
+      if (signUpError && signUpError.message === "User already registered") {
+        const { error: dbError } = await supabase
+          .from("authorized_employees")
+          .insert([{ email: newEmployeeEmail }]);
 
-          if (dbError) throw dbError;
+        if (dbError) throw dbError;
 
-          toast.success("Employé existant autorisé avec succès");
-          setNewEmployeeEmail("");
-          setNewEmployeePassword("");
-          fetchAuthorizedEmployees();
-          return;
-        }
-        throw signUpError;
+        toast.success("Employé existant autorisé avec succès");
+        setNewEmployeeEmail("");
+        setNewEmployeePassword("");
+        fetchAuthorizedEmployees();
+        return;
       }
+
+      // If there was any other signup error, throw it
+      if (signUpError) throw signUpError;
 
       // If we get here, the user was created successfully
       const { error: dbError } = await supabase
@@ -252,14 +253,16 @@ const Admin = () => {
       if (dbError) throw dbError;
 
       // Create or update profile with employee role
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert({
-          id: signUpData.user?.id,
-          role: 'employee'
-        });
+      if (signUpData.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: signUpData.user.id,
+            role: 'employee'
+          });
 
-      if (profileError) throw profileError;
+        if (profileError) throw profileError;
+      }
 
       toast.success("Employé autorisé ajouté avec succès");
       setNewEmployeeEmail("");
