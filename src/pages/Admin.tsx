@@ -201,15 +201,13 @@ const Admin = () => {
     }
 
     try {
-      // First check if the email is already in authorized_employees
-      const { data: existingEmployee, error: queryError } = await supabase
+      // First check if the email is already authorized
+      const { data: existingEmployee } = await supabase
         .from("authorized_employees")
         .select("*")
         .eq("email", newEmployeeEmail)
         .maybeSingle();
 
-      if (queryError) throw queryError;
-      
       if (existingEmployee) {
         toast.error("Cet employé est déjà autorisé");
         return;
@@ -227,13 +225,13 @@ const Admin = () => {
         }
       });
 
-      // If user exists but not in authorized_employees, add them
+      // Handle case where user exists but isn't authorized
       if (signUpError && signUpError.message === "User already registered") {
-        const { error: dbError } = await supabase
+        const { error: insertError } = await supabase
           .from("authorized_employees")
           .insert([{ email: newEmployeeEmail }]);
 
-        if (dbError) throw dbError;
+        if (insertError) throw insertError;
 
         toast.success("Employé existant autorisé avec succès");
         setNewEmployeeEmail("");
@@ -246,11 +244,11 @@ const Admin = () => {
       if (signUpError) throw signUpError;
 
       // If we get here, the user was created successfully
-      const { error: dbError } = await supabase
+      const { error: insertError } = await supabase
         .from("authorized_employees")
         .insert([{ email: newEmployeeEmail }]);
 
-      if (dbError) throw dbError;
+      if (insertError) throw insertError;
 
       // Create or update profile with employee role
       if (signUpData.user) {
