@@ -59,7 +59,7 @@ export const AdminLoginForm = () => {
         .from('profiles')
         .select('role')
         .eq('id', (await supabase.auth.getSession()).data.session?.user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError) throw profileError;
 
