@@ -167,6 +167,22 @@ const Admin = () => {
     }
   };
 
+  const handleSuspendUser = async (userId: string) => {
+    try {
+      const { error: insertError } = await supabase
+        .from('suspended_users')
+        .insert([{ id: userId, suspended_by: (await supabase.auth.getSession()).data.session?.user.id }]);
+
+      if (insertError) throw insertError;
+
+      toast.success("Utilisateur suspendu avec succès");
+      fetchUsers();
+    } catch (error) {
+      console.error("Erreur lors de la suspension de l'utilisateur:", error);
+      toast.error("Erreur lors de la suspension de l'utilisateur");
+    }
+  };
+
   const handleAddEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newEmployeeEmail) {
@@ -184,23 +200,34 @@ const Admin = () => {
     }
 
     try {
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: newEmployeeEmail,
         password: newEmployeePassword,
-        email_confirm: true,
-        user_metadata: {
-          is_temporary_password: true,
-          role: 'employee'
+        options: {
+          data: {
+            role: 'employee',
+            is_temporary_password: true
+          }
         }
       });
 
-      if (authError) throw authError;
+      if (signUpError) throw signUpError;
 
       const { error: dbError } = await supabase
         .from("authorized_employees")
         .insert([{ email: newEmployeeEmail }]);
 
       if (dbError) throw dbError;
+
+      // Create or update profile with employee role
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: signUpData.user?.id,
+          role: 'employee'
+        });
+
+      if (profileError) throw profileError;
 
       toast.success("Employé autorisé ajouté avec succès");
       setNewEmployeeEmail("");
@@ -209,23 +236,6 @@ const Admin = () => {
     } catch (error: any) {
       console.error("Erreur lors de l'ajout de l'employé:", error);
       toast.error(error.message || "Erreur lors de l'ajout de l'employé");
-    }
-  };
-
-  const handleRemoveEmployee = async (email: string) => {
-    try {
-      const { error } = await supabase
-        .from("authorized_employees")
-        .delete()
-        .eq("email", email);
-
-      if (error) throw error;
-
-      toast.success("Employé retiré avec succès");
-      fetchAuthorizedEmployees();
-    } catch (error) {
-      console.error("Erreur lors de la suppression de l'employé:", error);
-      toast.error("Erreur lors de la suppression de l'employé");
     }
   };
 
