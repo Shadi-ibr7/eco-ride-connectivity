@@ -28,6 +28,7 @@ export const AddEmployeeForm = ({ onEmployeeAdded }: AddEmployeeFormProps) => {
   const [newEmployeePassword, setNewEmployeePassword] = useState("");
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -82,8 +83,8 @@ export const AddEmployeeForm = ({ onEmployeeAdded }: AddEmployeeFormProps) => {
 
   const handleAddEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
 
-    // Validate both fields
     const isEmailValid = validateEmail(newEmployeeEmail);
     const isPasswordValid = validatePassword(newEmployeePassword);
 
@@ -91,22 +92,34 @@ export const AddEmployeeForm = ({ onEmployeeAdded }: AddEmployeeFormProps) => {
       return;
     }
 
+    setIsLoading(true);
+
     try {
       // First check if the email is already in authorized_employees
       const { data: existingEmployees, error: queryError } = await supabase
         .from("authorized_employees")
         .select("email")
-        .eq("email", newEmployeeEmail);
+        .eq("email", newEmployeeEmail)
+        .single();
 
-      if (queryError) throw queryError;
+      if (queryError && queryError.code !== 'PGRST116') {
+        throw queryError;
+      }
 
-      if (existingEmployees && existingEmployees.length > 0) {
+      if (existingEmployees) {
         toast.error("Cet employé est déjà autorisé");
         return;
       }
 
-      // Try to sign up the user
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      // Add to authorized_employees first
+      const { error: insertError } = await supabase
+        .from("authorized_employees")
+        .insert([{ email: newEmployeeEmail }]);
+
+      if (insertError) throw insertError;
+
+      // Then try to sign up the user
+      const { error: signUpError } = await supabase.auth.signUp({
         email: newEmployeeEmail,
         password: newEmployeePassword,
         options: {
@@ -117,38 +130,7 @@ export const AddEmployeeForm = ({ onEmployeeAdded }: AddEmployeeFormProps) => {
         }
       });
 
-      // If there's a user_already_exists error, we can proceed with adding to authorized_employees
-      let userId = signUpData?.user?.id;
-      
-      if (signUpError) {
-        if (signUpError.message.includes("User already registered")) {
-          // Get the existing user's ID
-          const { data: userData, error: userError } = await supabase.auth.admin.getUserById(newEmployeeEmail);
-          if (userError) throw userError;
-          userId = userData?.user?.id;
-        } else {
-          throw signUpError;
-        }
-      }
-
-      // Add to authorized_employees
-      const { error: insertError } = await supabase
-        .from("authorized_employees")
-        .insert([{ email: newEmployeeEmail }]);
-
-      if (insertError) throw insertError;
-
-      // Update profile if we have a user ID
-      if (userId) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .upsert({
-            id: userId,
-            role: 'employee'
-          });
-
-        if (profileError) throw profileError;
-      }
+      if (signUpError) throw signUpError;
 
       toast.success("Employé autorisé ajouté avec succès");
       setNewEmployeeEmail("");
@@ -157,6 +139,16 @@ export const AddEmployeeForm = ({ onEmployeeAdded }: AddEmployeeFormProps) => {
     } catch (error: any) {
       console.error("Erreur lors de l'ajout de l'employé:", error);
       toast.error(error.message || "Erreur lors de l'ajout de l'employé");
+      
+      // If there was an error during signup, remove from authorized_employees
+      if (error.message !== "User already registered") {
+        await supabase
+          .from("authorized_employees")
+          .delete()
+          .eq("email", newEmployeeEmail);
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -174,6 +166,7 @@ export const AddEmployeeForm = ({ onEmployeeAdded }: AddEmployeeFormProps) => {
               validateEmail(e.target.value);
             }}
             className={`w-full ${emailError ? 'border-red-500' : ''}`}
+            disabled={isLoading}
           />
           {emailError && (
             <p className="text-sm text-red-500">{emailError}</p>
@@ -189,6 +182,7 @@ export const AddEmployeeForm = ({ onEmployeeAdded }: AddEmployeeFormProps) => {
               validatePassword(e.target.value);
             }}
             className={`w-full ${passwordError ? 'border-red-500' : ''}`}
+            disabled={isLoading}
           />
           {passwordError && (
             <p className="text-sm text-red-500">{passwordError}</p>
@@ -198,7 +192,13 @@ export const AddEmployeeForm = ({ onEmployeeAdded }: AddEmployeeFormProps) => {
             une minuscule, un chiffre et un caractère spécial.
           </p>
         </div>
-        <Button type="submit" className="w-full">Ajouter</Button>
+        <Button 
+          type="submit" 
+          className="w-full"
+          disabled={isLoading}
+        >
+          {isLoading ? "Ajout en cours..." : "Ajouter"}
+        </Button>
       </form>
     </div>
   );
