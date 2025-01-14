@@ -53,13 +53,14 @@ export const AddEmployeeForm = ({ onEmployeeAdded }: AddEmployeeFormProps) => {
 
     try {
       // First check if the email is already in authorized_employees
-      const { data: existingEmployee } = await supabase
+      const { data: existingEmployees, error: queryError } = await supabase
         .from("authorized_employees")
         .select("email")
-        .eq("email", newEmployeeEmail)
-        .single();
+        .eq("email", newEmployeeEmail);
 
-      if (existingEmployee) {
+      if (queryError) throw queryError;
+
+      if (existingEmployees && existingEmployees.length > 0) {
         toast.error("Cet employé est déjà autorisé");
         return;
       }
