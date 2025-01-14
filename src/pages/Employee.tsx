@@ -3,15 +3,26 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { ThumbsUp, ThumbsDown } from "lucide-react";
 
 const Employee = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [ridesData, setRidesData] = useState<any[]>([]);
-  const [creditsData, setCreditsData] = useState<any[]>([]);
-  const [totalCredits, setTotalCredits] = useState(0);
+  const [pendingReviews, setPendingReviews] = useState<any[]>([]);
+  const [problematicRides, setProblematicRides] = useState<any[]>([]);
 
   useEffect(() => {
     checkUser();
@@ -40,39 +51,51 @@ const Employee = () => {
   };
 
   const loadData = async () => {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 30);
-    const endDate = new Date();
+    // Charger les avis en attente
+    const { data: reviews, error: reviewsError } = await supabase
+      .from("driver_reviews")
+      .select(`
+        *,
+        reviewer:profiles!reviewer_id(name),
+        driver:profiles!driver_id(name)
+      `)
+      .eq("status", "pending");
 
-    // Charger les données des trajets par jour
-    const { data: rides } = await supabase
-      .rpc('get_rides_per_day', {
-        start_date: startDate.toISOString(),
-        end_date: endDate.toISOString()
-      });
-    
-    if (rides) {
-      setRidesData(rides.map((item: any) => ({
-        date: new Date(item.date).toLocaleDateString(),
-        count: item.count
-      })));
+    if (reviewsError) {
+      console.error("Error loading reviews:", reviewsError);
+      toast.error("Erreur lors du chargement des avis");
+    } else {
+      setPendingReviews(reviews || []);
     }
 
-    // Charger les données des crédits par jour
-    const { data: credits } = await supabase
-      .rpc('get_platform_credits_per_day', {
-        start_date: startDate.toISOString(),
-        end_date: endDate.toISOString()
-      });
+    // Charger les trajets problématiques
+    const { data: rides, error: ridesError } = await supabase
+      .from("problematic_rides")
+      .select("*")
+      .not("is_positive", "is", null);
 
-    if (credits) {
-      const totalCredits = credits.reduce((acc: number, curr: any) => acc + Number(curr.credits), 0);
-      setTotalCredits(totalCredits);
-      
-      setCreditsData(credits.map((item: any) => ({
-        date: new Date(item.date).toLocaleDateString(),
-        credits: item.credits
-      })));
+    if (ridesError) {
+      console.error("Error loading problematic rides:", ridesError);
+      toast.error("Erreur lors du chargement des trajets problématiques");
+    } else {
+      setProblematicRides(rides || []);
+    }
+  };
+
+  const handleReviewAction = async (reviewId: string, status: 'approved' | 'rejected') => {
+    try {
+      const { error } = await supabase
+        .from("driver_reviews")
+        .update({ status })
+        .eq("id", reviewId);
+
+      if (error) throw error;
+
+      toast.success(`Avis ${status === 'approved' ? 'approuvé' : 'rejeté'} avec succès`);
+      loadData(); // Recharger les données
+    } catch (error) {
+      console.error("Error updating review:", error);
+      toast.error("Erreur lors de la mise à jour de l'avis");
     }
   };
 
@@ -86,48 +109,127 @@ const Employee = () => {
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-8">Tableau de bord employé</h1>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Trajets par jour</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={ridesData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Area type="monotone" dataKey="count" stroke="#8884d8" fill="#8884d8" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Crédits par jour</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={creditsData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Area type="monotone" dataKey="credits" stroke="#82ca9d" fill="#82ca9d" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card className="mt-6">
+        {/* Avis en attente */}
+        <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Total des crédits de la plateforme</CardTitle>
+            <CardTitle>Avis en attente de validation</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-4xl font-bold">{totalCredits} crédits</p>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Chauffeur</TableHead>
+                  <TableHead>Auteur</TableHead>
+                  <TableHead>Note</TableHead>
+                  <TableHead>Commentaire</TableHead>
+                  <TableHead>Expérience</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pendingReviews.map((review) => (
+                  <TableRow key={review.id}>
+                    <TableCell>{review.driver?.name || "Anonyme"}</TableCell>
+                    <TableCell>{review.reviewer?.name || "Anonyme"}</TableCell>
+                    <TableCell>{review.rating}/5</TableCell>
+                    <TableCell>{review.comment || "-"}</TableCell>
+                    <TableCell>
+                      {review.is_positive ? (
+                        <Badge className="bg-green-500">Positive</Badge>
+                      ) : (
+                        <Badge className="bg-red-500">Négative</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="space-x-2">
+                      <Button
+                        size="sm"
+                        className="bg-green-500 hover:bg-green-600"
+                        onClick={() => handleReviewAction(review.id, 'approved')}
+                      >
+                        <ThumbsUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleReviewAction(review.id, 'rejected')}
+                      >
+                        <ThumbsDown className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {pendingReviews.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center">
+                      Aucun avis en attente
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Trajets problématiques */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Trajets problématiques</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID Trajet</TableHead>
+                  <TableHead>Chauffeur</TableHead>
+                  <TableHead>Passager</TableHead>
+                  <TableHead>Trajet</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Commentaire</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {problematicRides.map((ride) => (
+                  <TableRow key={ride.ride_id}>
+                    <TableCell className="font-mono">
+                      {ride.ride_id?.slice(0, 8)}...
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <div>{ride.driver_name || "Anonyme"}</div>
+                        <div className="text-sm text-gray-500">{ride.driver_email}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <div>{ride.passenger_name || "Anonyme"}</div>
+                        <div className="text-sm text-gray-500">{ride.passenger_email}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {ride.departure_city} → {ride.arrival_city}
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <div>
+                          {ride.departure_date && format(new Date(ride.departure_date), "Pp", { locale: fr })}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {ride.arrival_time && format(new Date(ride.arrival_time), "Pp", { locale: fr })}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{ride.review_comment || "-"}</TableCell>
+                  </TableRow>
+                ))}
+                {problematicRides.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center">
+                      Aucun trajet problématique
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>
