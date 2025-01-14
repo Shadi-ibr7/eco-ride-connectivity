@@ -52,7 +52,7 @@ const RideDetails = () => {
   const [showBookingDialog, setShowBookingDialog] = useState(false);
   const [userCredits, setUserCredits] = useState<number | null>(null);
 
-  // Fetch ride details and user session
+  // Fetch ride details and driver reviews
   const { data: ride, isLoading: isLoadingRide } = useQuery({
     queryKey: ["ride", id],
     queryFn: async () => {
