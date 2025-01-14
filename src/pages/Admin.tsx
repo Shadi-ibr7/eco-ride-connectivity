@@ -22,6 +22,7 @@ import {
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from "recharts";
 import { subDays, format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { z } from "zod";
 
 const chartConfig = {
   rides: {
@@ -40,11 +41,21 @@ const chartConfig = {
   },
 };
 
+const passwordSchema = z
+  .string()
+  .min(8, "Le mot de passe doit contenir au moins 8 caractères")
+  .regex(/[A-Z]/, "Le mot de passe doit contenir au moins une majuscule")
+  .regex(/[a-z]/, "Le mot de passe doit contenir au moins une minuscule")
+  .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre")
+  .regex(/[^A-Za-z0-9]/, "Le mot de passe doit contenir au moins un caractère spécial");
+
 const Admin = () => {
   const navigate = useNavigate();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [newEmployeeEmail, setNewEmployeeEmail] = useState("");
+  const [newEmployeePassword, setNewEmployeePassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [authorizedEmployees, setAuthorizedEmployees] = useState<any[]>([]);
   const [ridesData, setRidesData] = useState<any[]>([]);
   const [creditsData, setCreditsData] = useState<any[]>([]);
@@ -81,14 +92,12 @@ const Admin = () => {
     const endDate = new Date();
     const startDate = subDays(endDate, 7);
 
-    // Fetch rides per day
     const { data: rides } = await supabase
       .rpc('get_rides_per_day', {
         start_date: startDate.toISOString(),
         end_date: endDate.toISOString()
       });
 
-    // Fetch credits per day
     const { data: credits } = await supabase
       .rpc('get_platform_credits_per_day', {
         start_date: startDate.toISOString(),
@@ -98,7 +107,6 @@ const Admin = () => {
     if (rides) setRidesData(rides);
     if (credits) {
       setCreditsData(credits);
-      // Calculate total credits
       const total = credits.reduce((acc: number, curr: any) => acc + Number(curr.credits), 0);
       setTotalCredits(total);
     }
@@ -106,21 +114,18 @@ const Admin = () => {
 
   const fetchUsers = async () => {
     try {
-      // First, fetch all profiles
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("*");
 
       if (profilesError) throw profilesError;
 
-      // Then, fetch suspended users separately
       const { data: suspendedUsers, error: suspendedError } = await supabase
         .from("suspended_users")
         .select("*");
 
       if (suspendedError) throw suspendedError;
 
-      // Combine the data
       const combinedUsers = profiles?.map(profile => ({
         ...profile,
         suspended_users: suspendedUsers?.filter(su => su.id === profile.id) || []
@@ -149,18 +154,16 @@ const Admin = () => {
     setAuthorizedEmployees(data || []);
   };
 
-  const handleSuspendUser = async (userId: string) => {
+  const validatePassword = (password: string) => {
     try {
-      const { error } = await supabase
-        .from("suspended_users")
-        .insert([{ id: userId }]);
-
-      if (error) throw error;
-      toast.success("Utilisateur suspendu avec succès");
-      fetchUsers();
+      passwordSchema.parse(password);
+      setPasswordError("");
+      return true;
     } catch (error) {
-      console.error("Erreur lors de la suspension de l'utilisateur:", error);
-      toast.error("Erreur lors de la suspension de l'utilisateur");
+      if (error instanceof z.ZodError) {
+        setPasswordError(error.errors[0].message);
+      }
+      return false;
     }
   };
 
@@ -171,19 +174,41 @@ const Admin = () => {
       return;
     }
 
+    if (!newEmployeePassword) {
+      toast.error("Veuillez entrer un mot de passe temporaire");
+      return;
+    }
+
+    if (!validatePassword(newEmployeePassword)) {
+      return;
+    }
+
     try {
-      const { error } = await supabase
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: newEmployeeEmail,
+        password: newEmployeePassword,
+        email_confirm: true,
+        user_metadata: {
+          is_temporary_password: true,
+          role: 'employee'
+        }
+      });
+
+      if (authError) throw authError;
+
+      const { error: dbError } = await supabase
         .from("authorized_employees")
         .insert([{ email: newEmployeeEmail }]);
 
-      if (error) throw error;
+      if (dbError) throw dbError;
 
       toast.success("Employé autorisé ajouté avec succès");
       setNewEmployeeEmail("");
+      setNewEmployeePassword("");
       fetchAuthorizedEmployees();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erreur lors de l'ajout de l'employé:", error);
-      toast.error("Erreur lors de l'ajout de l'employé");
+      toast.error(error.message || "Erreur lors de l'ajout de l'employé");
     }
   };
 
@@ -331,15 +356,36 @@ const Admin = () => {
         <TabsContent value="employees" className="space-y-6">
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold mb-4">Ajouter un employé autorisé</h2>
-            <form onSubmit={handleAddEmployee} className="flex gap-4">
-              <Input
-                type="email"
-                placeholder="Email de l'employé"
-                value={newEmployeeEmail}
-                onChange={(e) => setNewEmployeeEmail(e.target.value)}
-                className="flex-1"
-              />
-              <Button type="submit">Ajouter</Button>
+            <form onSubmit={handleAddEmployee} className="space-y-4">
+              <div>
+                <Input
+                  type="email"
+                  placeholder="Email de l'employé"
+                  value={newEmployeeEmail}
+                  onChange={(e) => setNewEmployeeEmail(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Input
+                  type="password"
+                  placeholder="Mot de passe temporaire"
+                  value={newEmployeePassword}
+                  onChange={(e) => {
+                    setNewEmployeePassword(e.target.value);
+                    validatePassword(e.target.value);
+                  }}
+                  className="w-full"
+                />
+                {passwordError && (
+                  <p className="text-sm text-red-500">{passwordError}</p>
+                )}
+                <p className="text-sm text-gray-500">
+                  Le mot de passe doit contenir au moins 8 caractères, une majuscule,
+                  une minuscule, un chiffre et un caractère spécial.
+                </p>
+              </div>
+              <Button type="submit" className="w-full">Ajouter</Button>
             </form>
           </div>
 
