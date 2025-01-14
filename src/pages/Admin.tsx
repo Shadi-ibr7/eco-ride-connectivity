@@ -213,7 +213,36 @@ const Admin = () => {
         return;
       }
 
-      // Try to create the user
+      // Check if user exists in auth.users
+      const { data: { users }, error: getUserError } = await supabase.auth.admin.listUsers();
+      const existingUser = users?.find(user => user.email === newEmployeeEmail);
+
+      if (existingUser) {
+        // User exists, just add them to authorized_employees
+        const { error: insertError } = await supabase
+          .from("authorized_employees")
+          .insert([{ email: newEmployeeEmail }]);
+
+        if (insertError) throw insertError;
+
+        // Update their role if needed
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: existingUser.id,
+            role: 'employee'
+          });
+
+        if (profileError) throw profileError;
+
+        toast.success("Employé existant autorisé avec succès");
+        setNewEmployeeEmail("");
+        setNewEmployeePassword("");
+        fetchAuthorizedEmployees();
+        return;
+      }
+
+      // If we get here, the user doesn't exist, so create them
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: newEmployeeEmail,
         password: newEmployeePassword,
@@ -225,25 +254,9 @@ const Admin = () => {
         }
       });
 
-      // If user exists but isn't authorized, add them to authorized_employees
-      if (signUpError && signUpError.message === "User already registered") {
-        const { error: insertError } = await supabase
-          .from("authorized_employees")
-          .insert([{ email: newEmployeeEmail }]);
-
-        if (insertError) throw insertError;
-
-        toast.success("Employé existant autorisé avec succès");
-        setNewEmployeeEmail("");
-        setNewEmployeePassword("");
-        fetchAuthorizedEmployees();
-        return;
-      }
-
-      // If there was any other signup error, throw it
       if (signUpError) throw signUpError;
 
-      // If we get here, the user was created successfully
+      // Add to authorized_employees
       const { error: insertError } = await supabase
         .from("authorized_employees")
         .insert([{ email: newEmployeeEmail }]);
