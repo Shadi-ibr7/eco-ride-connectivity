@@ -225,7 +225,7 @@ const Admin = () => {
         }
       });
 
-      // Handle case where user exists but isn't authorized
+      // If user exists but isn't authorized, add them to authorized_employees
       if (signUpError && signUpError.message === "User already registered") {
         const { error: insertError } = await supabase
           .from("authorized_employees")
