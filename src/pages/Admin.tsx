@@ -13,6 +13,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from "recharts";
+import { subDays, format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -20,11 +29,15 @@ const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [newEmployeeEmail, setNewEmployeeEmail] = useState("");
   const [authorizedEmployees, setAuthorizedEmployees] = useState<any[]>([]);
+  const [ridesData, setRidesData] = useState<any[]>([]);
+  const [creditsData, setCreditsData] = useState<any[]>([]);
+  const [totalCredits, setTotalCredits] = useState(0);
 
   useEffect(() => {
     checkAdminAccess();
     fetchUsers();
     fetchAuthorizedEmployees();
+    fetchStatistics();
   }, []);
 
   const checkAdminAccess = async () => {
@@ -39,11 +52,38 @@ const Admin = () => {
       .from("profiles")
       .select("role")
       .eq("id", session.user.id)
-      .single();
+      .maybeSingle();
 
     if (profile?.role !== "admin") {
       navigate("/");
       toast.error("Accès non autorisé");
+    }
+  };
+
+  const fetchStatistics = async () => {
+    const endDate = new Date();
+    const startDate = subDays(endDate, 7);
+
+    // Fetch rides per day
+    const { data: rides } = await supabase
+      .rpc('get_rides_per_day', {
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString()
+      });
+
+    // Fetch credits per day
+    const { data: credits } = await supabase
+      .rpc('get_platform_credits_per_day', {
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString()
+      });
+
+    if (rides) setRidesData(rides);
+    if (credits) {
+      setCreditsData(credits);
+      // Calculate total credits
+      const total = credits.reduce((acc: number, curr: any) => acc + Number(curr.credits), 0);
+      setTotalCredits(total);
     }
   };
 
@@ -154,6 +194,77 @@ const Admin = () => {
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-6">Tableau de bord administrateur</h1>
+      
+      <div className="grid gap-4 mb-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Total des crédits de la plateforme</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalCredits} crédits</div>
+          </CardContent>
+        </Card>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Covoiturages par jour</CardTitle>
+            </CardHeader>
+            <CardContent className="h-[300px]">
+              <ChartContainer>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={ridesData}>
+                    <XAxis
+                      dataKey="date"
+                      tickFormatter={(date) => format(new Date(date), 'dd/MM', { locale: fr })}
+                    />
+                    <YAxis />
+                    <ChartTooltip>
+                      <ChartTooltipContent />
+                    </ChartTooltip>
+                    <Area
+                      type="monotone"
+                      dataKey="count"
+                      stroke="#2563eb"
+                      fill="#3b82f6"
+                      name="Covoiturages"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Crédits gagnés par jour</CardTitle>
+            </CardHeader>
+            <CardContent className="h-[300px]">
+              <ChartContainer>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={creditsData}>
+                    <XAxis
+                      dataKey="date"
+                      tickFormatter={(date) => format(new Date(date), 'dd/MM', { locale: fr })}
+                    />
+                    <YAxis />
+                    <ChartTooltip>
+                      <ChartTooltipContent />
+                    </ChartTooltip>
+                    <Area
+                      type="monotone"
+                      dataKey="credits"
+                      stroke="#16a34a"
+                      fill="#22c55e"
+                      name="Crédits"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
       
       <Tabs defaultValue="users" className="space-y-4">
         <TabsList>
