@@ -117,7 +117,7 @@ export const EmployeeLoginForm = () => {
       }
 
       toast.success("Connexion réussie !");
-      navigate("/employee");
+      navigate("/employee", { replace: true });
     } catch (error) {
       console.error("Error during login:", error);
       toast.error("Erreur lors de la connexion");
