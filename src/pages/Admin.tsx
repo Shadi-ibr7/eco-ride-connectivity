@@ -239,6 +239,23 @@ const Admin = () => {
     }
   };
 
+  const handleRemoveEmployee = async (email: string) => {
+    try {
+      const { error } = await supabase
+        .from("authorized_employees")
+        .delete()
+        .eq("email", email);
+
+      if (error) throw error;
+
+      toast.success("Employé retiré avec succès");
+      fetchAuthorizedEmployees();
+    } catch (error) {
+      console.error("Erreur lors de la suppression de l'employé:", error);
+      toast.error("Erreur lors de la suppression de l'employé");
+    }
+  };
+
   if (loading) {
     return <div className="p-8">Chargement...</div>;
   }
