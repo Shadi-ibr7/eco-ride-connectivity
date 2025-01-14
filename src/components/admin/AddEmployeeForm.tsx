@@ -65,7 +65,7 @@ export const AddEmployeeForm = ({ onEmployeeAdded }: AddEmployeeFormProps) => {
         return;
       }
 
-      // Try to sign up the user, but don't error if they already exist
+      // Try to sign up the user
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: newEmployeeEmail,
         password: newEmployeePassword,
@@ -77,9 +77,18 @@ export const AddEmployeeForm = ({ onEmployeeAdded }: AddEmployeeFormProps) => {
         }
       });
 
-      // If there's an error that's not "user already exists", throw it
-      if (signUpError && !signUpError.message.includes("User already registered")) {
-        throw signUpError;
+      // If there's a user_already_exists error, we can proceed with adding to authorized_employees
+      let userId = signUpData?.user?.id;
+      
+      if (signUpError) {
+        if (signUpError.message.includes("User already registered")) {
+          // Get the existing user's ID
+          const { data: userData, error: userError } = await supabase.auth.admin.getUserById(newEmployeeEmail);
+          if (userError) throw userError;
+          userId = userData?.user?.id;
+        } else {
+          throw signUpError;
+        }
       }
 
       // Add to authorized_employees
@@ -89,12 +98,12 @@ export const AddEmployeeForm = ({ onEmployeeAdded }: AddEmployeeFormProps) => {
 
       if (insertError) throw insertError;
 
-      // If we have a user (either new or existing), update their profile
-      if (signUpData?.user) {
+      // Update profile if we have a user ID
+      if (userId) {
         const { error: profileError } = await supabase
           .from('profiles')
           .upsert({
-            id: signUpData.user.id,
+            id: userId,
             role: 'employee'
           });
 
