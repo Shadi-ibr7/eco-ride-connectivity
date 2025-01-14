@@ -23,7 +23,7 @@ import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from "recharts";
 import { subDays, format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { z } from "zod";
-import { User } from "@supabase/supabase-js";
+import { AuthError } from "@supabase/supabase-js";
 
 const chartConfig = {
   rides: {
@@ -213,36 +213,7 @@ const Admin = () => {
         return;
       }
 
-      // Check if user exists in auth.users
-      const { data: adminData, error: getUserError } = await supabase.auth.admin.listUsers();
-      const existingUser = (adminData?.users as User[])?.find(user => user.email === newEmployeeEmail);
-
-      if (existingUser) {
-        // User exists, just add them to authorized_employees
-        const { error: insertError } = await supabase
-          .from("authorized_employees")
-          .insert([{ email: newEmployeeEmail }]);
-
-        if (insertError) throw insertError;
-
-        // Update their role if needed
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .upsert({
-            id: existingUser.id,
-            role: 'employee'
-          });
-
-        if (profileError) throw profileError;
-
-        toast.success("Employé existant autorisé avec succès");
-        setNewEmployeeEmail("");
-        setNewEmployeePassword("");
-        fetchAuthorizedEmployees();
-        return;
-      }
-
-      // If we get here, the user doesn't exist, so create them
+      // Try to sign up the user
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: newEmployeeEmail,
         password: newEmployeePassword,
@@ -254,7 +225,10 @@ const Admin = () => {
         }
       });
 
-      if (signUpError) throw signUpError;
+      // If user already exists, that's fine - we'll just add them to authorized_employees
+      if (signUpError && signUpError.message !== "User already registered") {
+        throw signUpError;
+      }
 
       // Add to authorized_employees
       const { error: insertError } = await supabase
@@ -263,8 +237,8 @@ const Admin = () => {
 
       if (insertError) throw insertError;
 
-      // Create or update profile with employee role
-      if (signUpData.user) {
+      // Update their profile role if they exist
+      if (signUpData?.user) {
         const { error: profileError } = await supabase
           .from('profiles')
           .upsert({
