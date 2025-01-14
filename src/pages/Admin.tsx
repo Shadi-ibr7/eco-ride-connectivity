@@ -23,7 +23,7 @@ import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from "recharts";
 import { subDays, format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { z } from "zod";
-import { AuthError } from "@supabase/supabase-js";
+import { User } from "@supabase/supabase-js";
 
 const chartConfig = {
   rides: {
@@ -214,8 +214,8 @@ const Admin = () => {
       }
 
       // Check if user exists in auth.users
-      const { data: { users }, error: getUserError } = await supabase.auth.admin.listUsers();
-      const existingUser = users?.find(user => user.email === newEmployeeEmail);
+      const { data: adminData, error: getUserError } = await supabase.auth.admin.listUsers();
+      const existingUser = (adminData?.users as User[])?.find(user => user.email === newEmployeeEmail);
 
       if (existingUser) {
         // User exists, just add them to authorized_employees
