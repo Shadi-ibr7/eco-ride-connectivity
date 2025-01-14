@@ -54,16 +54,6 @@ export const AdminLoginForm = () => {
         throw signInError;
       }
 
-      // Utiliser upsert pour gérer l'insertion de manière atomique
-      const { error: upsertError } = await supabase
-        .from('authorized_admins')
-        .upsert(
-          { email },
-          { onConflict: 'email' }
-        );
-
-      if (upsertError) throw upsertError;
-
       // Vérifier si le profil existe et a le rôle admin
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -92,6 +82,16 @@ export const AdminLoginForm = () => {
         
         if (updateError) throw updateError;
       }
+
+      // Une fois que le profil est configuré comme admin, on peut ajouter l'email aux admins autorisés
+      const { error: upsertError } = await supabase
+        .from('authorized_admins')
+        .upsert(
+          { email },
+          { onConflict: 'email' }
+        );
+
+      if (upsertError) throw upsertError;
 
       toast.success("Connexion réussie !");
       navigate('/admin');
