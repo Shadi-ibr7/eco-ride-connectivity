@@ -13,6 +13,11 @@ const passwordSchema = z
   .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre")
   .regex(/[^A-Za-z0-9]/, "Le mot de passe doit contenir au moins un caractère spécial");
 
+const emailSchema = z
+  .string()
+  .email("Veuillez entrer une adresse email valide")
+  .min(1, "L'email est requis");
+
 interface AddEmployeeFormProps {
   onEmployeeAdded: () => void;
 }
@@ -20,7 +25,21 @@ interface AddEmployeeFormProps {
 export const AddEmployeeForm = ({ onEmployeeAdded }: AddEmployeeFormProps) => {
   const [newEmployeeEmail, setNewEmployeeEmail] = useState("");
   const [newEmployeePassword, setNewEmployeePassword] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+
+  const validateEmail = (email: string) => {
+    try {
+      emailSchema.parse(email);
+      setEmailError("");
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        setEmailError(error.errors[0].message);
+      }
+      return false;
+    }
+  };
 
   const validatePassword = (password: string) => {
     try {
@@ -37,17 +56,12 @@ export const AddEmployeeForm = ({ onEmployeeAdded }: AddEmployeeFormProps) => {
 
   const handleAddEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newEmployeeEmail) {
-      toast.error("Veuillez entrer une adresse email");
-      return;
-    }
 
-    if (!newEmployeePassword) {
-      toast.error("Veuillez entrer un mot de passe temporaire");
-      return;
-    }
+    // Validate both fields
+    const isEmailValid = validateEmail(newEmployeeEmail);
+    const isPasswordValid = validatePassword(newEmployeePassword);
 
-    if (!validatePassword(newEmployeePassword)) {
+    if (!isEmailValid || !isPasswordValid) {
       return;
     }
 
@@ -124,14 +138,20 @@ export const AddEmployeeForm = ({ onEmployeeAdded }: AddEmployeeFormProps) => {
     <div className="bg-white rounded-lg shadow p-6">
       <h2 className="text-xl font-semibold mb-4">Ajouter un employé autorisé</h2>
       <form onSubmit={handleAddEmployee} className="space-y-4">
-        <div>
+        <div className="space-y-2">
           <Input
             type="email"
             placeholder="Email de l'employé"
             value={newEmployeeEmail}
-            onChange={(e) => setNewEmployeeEmail(e.target.value)}
-            className="w-full"
+            onChange={(e) => {
+              setNewEmployeeEmail(e.target.value);
+              validateEmail(e.target.value);
+            }}
+            className={`w-full ${emailError ? 'border-red-500' : ''}`}
           />
+          {emailError && (
+            <p className="text-sm text-red-500">{emailError}</p>
+          )}
         </div>
         <div className="space-y-2">
           <Input
@@ -142,7 +162,7 @@ export const AddEmployeeForm = ({ onEmployeeAdded }: AddEmployeeFormProps) => {
               setNewEmployeePassword(e.target.value);
               validatePassword(e.target.value);
             }}
-            className="w-full"
+            className={`w-full ${passwordError ? 'border-red-500' : ''}`}
           />
           {passwordError && (
             <p className="text-sm text-red-500">{passwordError}</p>
