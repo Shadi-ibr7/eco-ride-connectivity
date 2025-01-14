@@ -23,6 +23,23 @@ import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from "recharts";
 import { subDays, format } from "date-fns";
 import { fr } from "date-fns/locale";
 
+const chartConfig = {
+  rides: {
+    label: "Covoiturages",
+    theme: {
+      light: "#3b82f6",
+      dark: "#60a5fa",
+    },
+  },
+  credits: {
+    label: "Crédits",
+    theme: {
+      light: "#22c55e",
+      dark: "#4ade80",
+    },
+  },
+};
+
 const Admin = () => {
   const navigate = useNavigate();
   const [users, setUsers] = useState<any[]>([]);
@@ -211,7 +228,7 @@ const Admin = () => {
               <CardTitle>Covoiturages par jour</CardTitle>
             </CardHeader>
             <CardContent className="h-[300px]">
-              <ChartContainer>
+              <ChartContainer config={chartConfig}>
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={ridesData}>
                     <XAxis
@@ -219,15 +236,13 @@ const Admin = () => {
                       tickFormatter={(date) => format(new Date(date), 'dd/MM', { locale: fr })}
                     />
                     <YAxis />
-                    <ChartTooltip>
-                      <ChartTooltipContent />
-                    </ChartTooltip>
+                    <ChartTooltip content={<ChartTooltipContent />} />
                     <Area
                       type="monotone"
                       dataKey="count"
                       stroke="#2563eb"
                       fill="#3b82f6"
-                      name="Covoiturages"
+                      name="rides"
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -240,7 +255,7 @@ const Admin = () => {
               <CardTitle>Crédits gagnés par jour</CardTitle>
             </CardHeader>
             <CardContent className="h-[300px]">
-              <ChartContainer>
+              <ChartContainer config={chartConfig}>
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={creditsData}>
                     <XAxis
@@ -248,15 +263,13 @@ const Admin = () => {
                       tickFormatter={(date) => format(new Date(date), 'dd/MM', { locale: fr })}
                     />
                     <YAxis />
-                    <ChartTooltip>
-                      <ChartTooltipContent />
-                    </ChartTooltip>
+                    <ChartTooltip content={<ChartTooltipContent />} />
                     <Area
                       type="monotone"
                       dataKey="credits"
                       stroke="#16a34a"
                       fill="#22c55e"
-                      name="Crédits"
+                      name="credits"
                     />
                   </AreaChart>
                 </ResponsiveContainer>
