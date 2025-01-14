@@ -27,7 +27,7 @@ type Review = {
 
 type RideDetails = {
   id: string;
-  user_id: string;  // Ajout de user_id
+  user_id: string;
   departure_city: string;
   arrival_city: string;
   departure_date: string;
@@ -56,12 +56,14 @@ const RideDetails = () => {
   const { data: ride, isLoading: isLoadingRide } = useQuery({
     queryKey: ["ride", id],
     queryFn: async () => {
+      if (!id) throw new Error("No ride ID provided");
+
       const [rideResponse, reviewsResponse] = await Promise.all([
         supabase
           .from("rides")
           .select(`
             *,
-            profile: profiles(name)
+            profile:profiles(name)
           `)
           .eq("id", id)
           .single(),
