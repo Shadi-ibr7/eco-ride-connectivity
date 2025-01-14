@@ -74,14 +74,19 @@ export const EmployeeLoginForm = () => {
 
     try {
       // First, check if the email is authorized
-      const { data: employees, error: employeeError } = await supabase
+      const { data: employee, error: employeeError } = await supabase
         .from("authorized_employees")
         .select("email")
         .eq("email", email)
-        .single();
+        .maybeSingle();
 
-      if (employeeError || !employees) {
+      if (employeeError) {
+        throw employeeError;
+      }
+
+      if (!employee) {
         toast.error("Email non autorisé");
+        setIsLoading(false);
         return;
       }
 
@@ -91,7 +96,15 @@ export const EmployeeLoginForm = () => {
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message === "Invalid login credentials") {
+          toast.error("Email ou mot de passe incorrect");
+        } else {
+          toast.error("Erreur lors de la connexion");
+        }
+        console.error("Login error:", error);
+        return;
+      }
 
       // Check if this is a temporary password login
       const { data: metadata } = await supabase.auth.getUser();
