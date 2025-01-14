@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { AuthError } from "@supabase/supabase-js";
 
 const passwordSchema = z
   .string()
@@ -53,7 +52,19 @@ export const AddEmployeeForm = ({ onEmployeeAdded }: AddEmployeeFormProps) => {
     }
 
     try {
-      // Try to sign up the user
+      // First check if the email is already in authorized_employees
+      const { data: existingEmployee } = await supabase
+        .from("authorized_employees")
+        .select("email")
+        .eq("email", newEmployeeEmail)
+        .single();
+
+      if (existingEmployee) {
+        toast.error("Cet employé est déjà autorisé");
+        return;
+      }
+
+      // Try to sign up the user, but don't error if they already exist
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: newEmployeeEmail,
         password: newEmployeePassword,
@@ -65,8 +76,8 @@ export const AddEmployeeForm = ({ onEmployeeAdded }: AddEmployeeFormProps) => {
         }
       });
 
-      // If user already exists, that's fine - we'll just add them to authorized_employees
-      if (signUpError && signUpError.message !== "User already registered") {
+      // If there's an error that's not "user already exists", throw it
+      if (signUpError && !signUpError.message.includes("User already registered")) {
         throw signUpError;
       }
 
@@ -77,7 +88,7 @@ export const AddEmployeeForm = ({ onEmployeeAdded }: AddEmployeeFormProps) => {
 
       if (insertError) throw insertError;
 
-      // Update their profile role if they exist
+      // If we have a user (either new or existing), update their profile
       if (signUpData?.user) {
         const { error: profileError } = await supabase
           .from('profiles')
