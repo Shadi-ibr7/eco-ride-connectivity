@@ -49,12 +49,27 @@ const Admin = () => {
 
   const fetchUsers = async () => {
     try {
-      const { data, error } = await supabase
+      // First, fetch all profiles
+      const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select("*, suspended_users(*)");
+        .select("*");
 
-      if (error) throw error;
-      setUsers(data || []);
+      if (profilesError) throw profilesError;
+
+      // Then, fetch suspended users separately
+      const { data: suspendedUsers, error: suspendedError } = await supabase
+        .from("suspended_users")
+        .select("*");
+
+      if (suspendedError) throw suspendedError;
+
+      // Combine the data
+      const combinedUsers = profiles?.map(profile => ({
+        ...profile,
+        suspended_users: suspendedUsers?.filter(su => su.id === profile.id) || []
+      }));
+
+      setUsers(combinedUsers || []);
     } catch (error) {
       console.error("Erreur lors de la récupération des utilisateurs:", error);
       toast.error("Erreur lors de la récupération des utilisateurs");
