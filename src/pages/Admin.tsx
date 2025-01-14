@@ -1,62 +1,19 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from "recharts";
-import { subDays, format } from "date-fns";
-import { fr } from "date-fns/locale";
-import { z } from "zod";
-import { AuthError } from "@supabase/supabase-js";
-
-const chartConfig = {
-  rides: {
-    label: "Covoiturages",
-    theme: {
-      light: "#3b82f6",
-      dark: "#60a5fa",
-    },
-  },
-  credits: {
-    label: "Crédits",
-    theme: {
-      light: "#22c55e",
-      dark: "#4ade80",
-    },
-  },
-};
-
-const passwordSchema = z
-  .string()
-  .min(8, "Le mot de passe doit contenir au moins 8 caractères")
-  .regex(/[A-Z]/, "Le mot de passe doit contenir au moins une majuscule")
-  .regex(/[a-z]/, "Le mot de passe doit contenir au moins une minuscule")
-  .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre")
-  .regex(/[^A-Za-z0-9]/, "Le mot de passe doit contenir au moins un caractère spécial");
+import { subDays } from "date-fns";
+import { PlatformCreditsCard } from "@/components/admin/PlatformCreditsCard";
+import { StatisticsCharts } from "@/components/admin/StatisticsCharts";
+import { AddEmployeeForm } from "@/components/admin/AddEmployeeForm";
+import { EmployeesList } from "@/components/admin/EmployeesList";
+import { UsersTable } from "@/components/admin/UsersTable";
 
 const Admin = () => {
   const navigate = useNavigate();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newEmployeeEmail, setNewEmployeeEmail] = useState("");
-  const [newEmployeePassword, setNewEmployeePassword] = useState("");
-  const [passwordError, setPasswordError] = useState("");
   const [authorizedEmployees, setAuthorizedEmployees] = useState<any[]>([]);
   const [ridesData, setRidesData] = useState<any[]>([]);
   const [creditsData, setCreditsData] = useState<any[]>([]);
@@ -155,19 +112,6 @@ const Admin = () => {
     setAuthorizedEmployees(data || []);
   };
 
-  const validatePassword = (password: string) => {
-    try {
-      passwordSchema.parse(password);
-      setPasswordError("");
-      return true;
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        setPasswordError(error.errors[0].message);
-      }
-      return false;
-    }
-  };
-
   const handleSuspendUser = async (userId: string) => {
     try {
       const { error: insertError } = await supabase
@@ -181,81 +125,6 @@ const Admin = () => {
     } catch (error) {
       console.error("Erreur lors de la suspension de l'utilisateur:", error);
       toast.error("Erreur lors de la suspension de l'utilisateur");
-    }
-  };
-
-  const handleAddEmployee = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newEmployeeEmail) {
-      toast.error("Veuillez entrer une adresse email");
-      return;
-    }
-
-    if (!newEmployeePassword) {
-      toast.error("Veuillez entrer un mot de passe temporaire");
-      return;
-    }
-
-    if (!validatePassword(newEmployeePassword)) {
-      return;
-    }
-
-    try {
-      // First check if the email is already authorized
-      const { data: existingEmployee } = await supabase
-        .from("authorized_employees")
-        .select("*")
-        .eq("email", newEmployeeEmail)
-        .maybeSingle();
-
-      if (existingEmployee) {
-        toast.error("Cet employé est déjà autorisé");
-        return;
-      }
-
-      // Try to sign up the user
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: newEmployeeEmail,
-        password: newEmployeePassword,
-        options: {
-          data: {
-            role: 'employee',
-            is_temporary_password: true
-          }
-        }
-      });
-
-      // If user already exists, that's fine - we'll just add them to authorized_employees
-      if (signUpError && signUpError.message !== "User already registered") {
-        throw signUpError;
-      }
-
-      // Add to authorized_employees
-      const { error: insertError } = await supabase
-        .from("authorized_employees")
-        .insert([{ email: newEmployeeEmail }]);
-
-      if (insertError) throw insertError;
-
-      // Update their profile role if they exist
-      if (signUpData?.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .upsert({
-            id: signUpData.user.id,
-            role: 'employee'
-          });
-
-        if (profileError) throw profileError;
-      }
-
-      toast.success("Employé autorisé ajouté avec succès");
-      setNewEmployeeEmail("");
-      setNewEmployeePassword("");
-      fetchAuthorizedEmployees();
-    } catch (error: any) {
-      console.error("Erreur lors de l'ajout de l'employé:", error);
-      toast.error(error.message || "Erreur lors de l'ajout de l'employé");
     }
   };
 
@@ -285,70 +154,8 @@ const Admin = () => {
       <h1 className="text-2xl font-bold mb-6">Tableau de bord administrateur</h1>
       
       <div className="grid gap-4 mb-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Total des crédits de la plateforme</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalCredits} crédits</div>
-          </CardContent>
-        </Card>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Covoiturages par jour</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[300px]">
-              <ChartContainer config={chartConfig}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={ridesData}>
-                    <XAxis
-                      dataKey="date"
-                      tickFormatter={(date) => format(new Date(date), 'dd/MM', { locale: fr })}
-                    />
-                    <YAxis />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Area
-                      type="monotone"
-                      dataKey="count"
-                      stroke="#2563eb"
-                      fill="#3b82f6"
-                      name="rides"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Crédits gagnés par jour</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[300px]">
-              <ChartContainer config={chartConfig}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={creditsData}>
-                    <XAxis
-                      dataKey="date"
-                      tickFormatter={(date) => format(new Date(date), 'dd/MM', { locale: fr })}
-                    />
-                    <YAxis />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Area
-                      type="monotone"
-                      dataKey="credits"
-                      stroke="#16a34a"
-                      fill="#22c55e"
-                      name="credits"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-        </div>
+        <PlatformCreditsCard totalCredits={totalCredits} />
+        <StatisticsCharts ridesData={ridesData} creditsData={creditsData} />
       </div>
       
       <Tabs defaultValue="users" className="space-y-4">
@@ -358,112 +165,15 @@ const Admin = () => {
         </TabsList>
 
         <TabsContent value="users" className="bg-white rounded-lg shadow">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Nom</TableHead>
-                <TableHead>Crédits</TableHead>
-                <TableHead>Rôle</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-mono">{user.id}</TableCell>
-                  <TableCell>{user.name || "Non défini"}</TableCell>
-                  <TableCell>{user.credits}</TableCell>
-                  <TableCell>{user.role || "Non défini"}</TableCell>
-                  <TableCell>
-                    {user.suspended_users?.[0] ? (
-                      <span className="text-red-500">Suspendu</span>
-                    ) : (
-                      <span className="text-green-500">Actif</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {!user.suspended_users?.[0] && (
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleSuspendUser(user.id)}
-                      >
-                        Suspendre
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <UsersTable users={users} onSuspendUser={handleSuspendUser} />
         </TabsContent>
 
         <TabsContent value="employees" className="space-y-6">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">Ajouter un employé autorisé</h2>
-            <form onSubmit={handleAddEmployee} className="space-y-4">
-              <div>
-                <Input
-                  type="email"
-                  placeholder="Email de l'employé"
-                  value={newEmployeeEmail}
-                  onChange={(e) => setNewEmployeeEmail(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-              <div className="space-y-2">
-                <Input
-                  type="password"
-                  placeholder="Mot de passe temporaire"
-                  value={newEmployeePassword}
-                  onChange={(e) => {
-                    setNewEmployeePassword(e.target.value);
-                    validatePassword(e.target.value);
-                  }}
-                  className="w-full"
-                />
-                {passwordError && (
-                  <p className="text-sm text-red-500">{passwordError}</p>
-                )}
-                <p className="text-sm text-gray-500">
-                  Le mot de passe doit contenir au moins 8 caractères, une majuscule,
-                  une minuscule, un chiffre et un caractère spécial.
-                </p>
-              </div>
-              <Button type="submit" className="w-full">Ajouter</Button>
-            </form>
-          </div>
-
-          <div className="bg-white rounded-lg shadow">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Date d'ajout</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {authorizedEmployees.map((employee) => (
-                  <TableRow key={employee.email}>
-                    <TableCell>{employee.email}</TableCell>
-                    <TableCell>{new Date(employee.created_at).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleRemoveEmployee(employee.email)}
-                      >
-                        Retirer
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <AddEmployeeForm onEmployeeAdded={fetchAuthorizedEmployees} />
+          <EmployeesList 
+            employees={authorizedEmployees}
+            onRemoveEmployee={handleRemoveEmployee}
+          />
         </TabsContent>
       </Tabs>
     </div>
