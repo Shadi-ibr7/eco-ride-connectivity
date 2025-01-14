@@ -201,12 +201,14 @@ const Admin = () => {
 
     try {
       // First check if the email is already in authorized_employees
-      const { data: existingEmployee } = await supabase
+      const { data: existingEmployee, error: queryError } = await supabase
         .from("authorized_employees")
         .select("*")
         .eq("email", newEmployeeEmail)
-        .single();
+        .maybeSingle();
 
+      if (queryError) throw queryError;
+      
       if (existingEmployee) {
         toast.error("Cet employé est déjà autorisé");
         return;
