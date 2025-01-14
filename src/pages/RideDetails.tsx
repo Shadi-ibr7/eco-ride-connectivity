@@ -46,7 +46,7 @@ type RideDetails = {
 };
 
 const RideDetails = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showBookingDialog, setShowBookingDialog] = useState(false);
@@ -66,7 +66,7 @@ const RideDetails = () => {
             profile:profiles(name)
           `)
           .eq("id", id)
-          .single(),
+          .maybeSingle(),
         supabase
           .from("driver_reviews")
           .select(`
@@ -79,15 +79,16 @@ const RideDetails = () => {
       ]);
 
       if (rideResponse.error) throw rideResponse.error;
+      if (!rideResponse.data) throw new Error("Ride not found");
 
       return {
         ...rideResponse.data,
         driver_reviews: reviewsResponse.data || []
       } as RideDetails;
     },
+    enabled: !!id,
   });
 
-  // Check user session and credits
   const { data: session } = useQuery({
     queryKey: ["session"],
     queryFn: async () => {
