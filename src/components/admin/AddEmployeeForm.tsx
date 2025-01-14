@@ -95,7 +95,7 @@ export const AddEmployeeForm = ({ onEmployeeAdded }: AddEmployeeFormProps) => {
     setIsLoading(true);
 
     try {
-      // Vérifier si l'employé existe déjà
+      // Vérifier si l'employé est déjà autorisé
       const { data: existingEmployee } = await supabase
         .from("authorized_employees")
         .select("email")
@@ -107,25 +107,36 @@ export const AddEmployeeForm = ({ onEmployeeAdded }: AddEmployeeFormProps) => {
         return;
       }
 
-      // Créer le compte utilisateur
-      const { error: signUpError } = await supabase.auth.signUp({
+      // Vérifier si l'utilisateur existe déjà
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email: newEmployeeEmail,
         password: newEmployeePassword,
-        options: {
+      });
+
+      if (!signInError) {
+        // L'utilisateur existe, mettre à jour son rôle
+        const { error: updateError } = await supabase.auth.updateUser({
           data: {
             role: 'employee',
             is_temporary_password: true
           }
-        }
-      });
+        });
 
-      if (signUpError) {
-        if (signUpError.message === "User already registered") {
-          toast.error("Un compte existe déjà avec cet email");
-        } else {
-          throw signUpError;
-        }
-        return;
+        if (updateError) throw updateError;
+      } else {
+        // L'utilisateur n'existe pas, le créer
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: newEmployeeEmail,
+          password: newEmployeePassword,
+          options: {
+            data: {
+              role: 'employee',
+              is_temporary_password: true
+            }
+          }
+        });
+
+        if (signUpError) throw signUpError;
       }
 
       // Ajouter aux employés autorisés
