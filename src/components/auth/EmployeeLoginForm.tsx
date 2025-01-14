@@ -17,13 +17,15 @@ export function EmployeeLoginForm() {
 
     try {
       // Vérifier si l'email est autorisé
-      const { data: authorizedEmployees, error: authError } = await supabase
+      const { data: authorizedEmployee, error: authError } = await supabase
         .from("authorized_employees")
         .select("email")
         .eq("email", email)
-        .single();
+        .maybeSingle();
 
-      if (authError || !authorizedEmployees) {
+      if (authError) throw authError;
+      
+      if (!authorizedEmployee) {
         toast.error("Vous n'êtes pas autorisé à accéder à cette interface");
         setLoading(false);
         return;
@@ -83,4 +85,4 @@ export function EmployeeLoginForm() {
       </Button>
     </form>
   );
-};
+}
