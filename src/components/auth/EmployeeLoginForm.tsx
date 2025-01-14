@@ -45,6 +45,11 @@ export const EmployeeLoginForm = () => {
       return;
     }
 
+    if (newPassword === password) {
+      toast.error("Le nouveau mot de passe doit être différent de l'ancien mot de passe");
+      return;
+    }
+
     if (!validatePassword(newPassword)) {
       return;
     }
