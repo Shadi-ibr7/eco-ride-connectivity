@@ -13,7 +13,7 @@ const Rides = () => {
     date: string;
   } | null>(null);
 
-  // New query to fetch all upcoming rides
+  // Query to fetch all upcoming rides
   const { data: upcomingRides = [] } = useQuery({
     queryKey: ["upcoming-rides"],
     queryFn: async () => {
@@ -28,12 +28,16 @@ const Rides = () => {
         .order("departure_date", { ascending: true })
         .limit(50);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching rides:", error);
+        throw error;
+      }
+      console.log("Fetched rides:", data); // Pour debug
       return data || [];
     },
   });
 
-  // Original search query
+  // Search query
   const { data: searchResults = [], isLoading } = useQuery({
     queryKey: ["rides", searchParams],
     queryFn: async () => {
@@ -101,8 +105,8 @@ const Rides = () => {
         <section className="bg-gradient-to-br from-ecogreen to-ecogreen-light py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center text-white mb-8">
-              <h1 className="text-3xl font-bold">Trouvez votre covoiturage</h1>
-              <p className="mt-2">Recherchez parmi les trajets disponibles</p>
+              <h1 className="text-4xl font-bold">Trouvez votre covoiturage</h1>
+              <p className="mt-2 text-xl">Recherchez parmi les trajets disponibles</p>
             </div>
             <SearchForm onSearch={handleSearch} />
           </div>
