@@ -17,6 +17,79 @@ import { RideStatusActions } from "@/components/RideStatusActions";
 import { RideReviewForm } from "@/components/RideReviewForm";
 import { CreateRideForm } from "@/components/CreateRideForm";
 
+// Demo data
+const demoRides = [
+  {
+    id: "demo-1",
+    user_id: "demo-user-1",
+    departure_city: "Paris",
+    arrival_city: "Lyon",
+    departure_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+    arrival_time: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000).toISOString(),
+    price: 25,
+    seats_available: 3,
+    is_electric_car: true,
+    vehicle_brand: "Tesla",
+    vehicle_model: "Model 3",
+    status: "pending",
+    profile: { name: "Marie D." },
+    driver_reviews: [
+      {
+        rating: 4.8,
+        comment: "Excellent conductrice, très ponctuelle !",
+        created_at: new Date().toISOString(),
+        reviewer: { name: "Jean P." }
+      }
+    ]
+  },
+  {
+    id: "demo-2",
+    user_id: "demo-user-2",
+    departure_city: "Marseille",
+    arrival_city: "Nice",
+    departure_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+    arrival_time: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000 + 2.5 * 60 * 60 * 1000).toISOString(),
+    price: 18,
+    seats_available: 2,
+    is_electric_car: false,
+    vehicle_brand: "Peugeot",
+    vehicle_model: "308",
+    status: "pending",
+    profile: { name: "Thomas B." },
+    driver_reviews: [
+      {
+        rating: 4.5,
+        comment: "Trajet agréable et conducteur sympathique",
+        created_at: new Date().toISOString(),
+        reviewer: { name: "Sophie L." }
+      }
+    ]
+  },
+  {
+    id: "demo-3",
+    user_id: "demo-user-3",
+    departure_city: "Bordeaux",
+    arrival_city: "Toulouse",
+    departure_date: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(),
+    arrival_time: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000 + 2.5 * 60 * 60 * 1000).toISOString(),
+    price: 20,
+    seats_available: 4,
+    is_electric_car: true,
+    vehicle_brand: "Renault",
+    vehicle_model: "Zoe",
+    status: "pending",
+    profile: { name: "Sophie M." },
+    driver_reviews: [
+      {
+        rating: 4.9,
+        comment: "Super trajet, voiture très confortable",
+        created_at: new Date().toISOString(),
+        reviewer: { name: "Pierre D." }
+      }
+    ]
+  }
+];
+
 type Review = {
   rating: number;
   comment: string | null;
@@ -71,10 +144,18 @@ const RideDetails = () => {
     );
   }
 
-  // Fetch ride details and driver reviews
+  // Check if this is a demo ride
+  const isDemoRide = id?.startsWith('demo-');
+  const demoRide = isDemoRide ? demoRides.find(ride => ride.id === id) : null;
+
+  // Fetch ride details and driver reviews only for non-demo rides
   const { data: ride, isLoading: isLoadingRide } = useQuery({
     queryKey: ["ride", id],
     queryFn: async () => {
+      if (isDemoRide && demoRide) {
+        return demoRide as RideDetails;
+      }
+
       if (!id) throw new Error("No ride ID provided");
 
       const [rideResponse, reviewsResponse] = await Promise.all([
@@ -127,46 +208,20 @@ const RideDetails = () => {
     },
   });
 
-  // Book ride mutation
-  const bookRideMutation = useMutation({
-    mutationFn: async () => {
-      if (!session?.user || !ride) throw new Error("Not authenticated");
+  if (isLoadingRide && !isDemoRide) {
+    return <div>Chargement...</div>;
+  }
 
-      const { error: bookingError } = await supabase
-        .from("ride_bookings")
-        .insert({
-          ride_id: ride.id,
-          passenger_id: session.user.id,
-        });
+  if (!ride) {
+    return <div>Trajet non trouvé</div>;
+  }
 
-      if (bookingError) throw bookingError;
+  const averageRating = ride.driver_reviews?.length
+    ? ride.driver_reviews.reduce((acc, review) => acc + review.rating, 0) /
+      ride.driver_reviews.length
+    : null;
 
-      // Update user credits
-      const { error: creditsError } = await supabase
-        .from("profiles")
-        .update({ credits: (userCredits || 0) - ride.price })
-        .eq("id", session.user.id);
-
-      if (creditsError) throw creditsError;
-
-      // Update available seats
-      const { error: seatsError } = await supabase
-        .from("rides")
-        .update({ seats_available: ride.seats_available - 1 })
-        .eq("id", ride.id);
-
-      if (seatsError) throw seatsError;
-    },
-    onSuccess: () => {
-      toast.success("Réservation confirmée !");
-      queryClient.invalidateQueries({ queryKey: ["ride", id] });
-      setShowBookingDialog(false);
-    },
-    onError: (error) => {
-      console.error("Booking error:", error);
-      toast.error("Erreur lors de la réservation");
-    },
-  });
+  const canBook = !isDemoRide && ride.seats_available > 0 && (!session?.user || (userCredits && userCredits >= ride.price));
 
   const handleBookClick = () => {
     if (!session) {
@@ -185,21 +240,6 @@ const RideDetails = () => {
   const handleBookingConfirm = () => {
     bookRideMutation.mutate();
   };
-
-  if (isLoadingRide) {
-    return <div>Chargement...</div>;
-  }
-
-  if (!ride) {
-    return <div>Trajet non trouvé</div>;
-  }
-
-  const averageRating = ride.driver_reviews?.length
-    ? ride.driver_reviews.reduce((acc, review) => acc + review.rating, 0) /
-      ride.driver_reviews.length
-    : null;
-
-  const canBook = ride.seats_available > 0 && (!session?.user || (userCredits && userCredits >= ride.price));
 
   return (
     <div className="min-h-screen flex flex-col">
