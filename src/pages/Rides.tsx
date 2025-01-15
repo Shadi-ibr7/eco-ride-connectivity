@@ -21,6 +21,13 @@ const Rides = () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
+      // First, let's check if we have any rides at all
+      const { count: totalRides } = await supabase
+        .from("rides")
+        .select("*", { count: "exact", head: true });
+
+      console.log("Total rides in database:", totalRides);
+
       const { data, error } = await supabase
         .from("rides")
         .select(`
@@ -38,6 +45,13 @@ const Rides = () => {
       }
 
       console.log("Fetched rides:", data); // Debug log
+      console.log("Today's date for comparison:", today.toISOString());
+      if (data && data.length === 0) {
+        console.log("No rides found matching criteria. Checking conditions:");
+        console.log("- Departure date >=", today.toISOString());
+        console.log("- Seats available > 0");
+      }
+
       return data || [];
     },
   });
