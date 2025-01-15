@@ -16,7 +16,25 @@ interface SearchResultsProps {
 export const SearchResults = ({ rides, showNoResults, nextAvailableDate, onDateChange }: SearchResultsProps) => {
   const navigate = useNavigate();
 
-  if (!showNoResults && (!rides || rides.length === 0)) return null;
+  if (!showNoResults && (!rides || rides.length === 0)) {
+    return (
+      <Card className="mt-8">
+        <CardContent className="p-6">
+          <p className="text-center text-gray-600">
+            Aucun trajet n'est disponible pour le moment. Revenez plus tard ou créez votre propre trajet !
+          </p>
+          <div className="text-center mt-4">
+            <Button 
+              onClick={() => navigate('/rides/create')}
+              className="bg-ecogreen hover:bg-ecogreen-light"
+            >
+              Créer un trajet
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (showNoResults && rides.length === 0 && nextAvailableDate) {
     return (
