@@ -25,7 +25,7 @@ const Rides = () => {
         .from("rides")
         .select(`
           *,
-          profile: profiles(name)
+          profile: profiles(name, id)
         `)
         .gte("departure_date", today.toISOString())
         .gt("seats_available", 0)
@@ -48,11 +48,13 @@ const Rides = () => {
     queryFn: async () => {
       if (!searchParams) return [];
 
+      console.log("Searching rides with params:", searchParams); // Debug log
+
       const { data, error } = await supabase
         .from("rides")
         .select(`
           *,
-          profile: profiles(name)
+          profile: profiles(name, id)
         `)
         .eq("departure_city", searchParams.departure)
         .eq("arrival_city", searchParams.destination)
@@ -61,7 +63,12 @@ const Rides = () => {
         .gt("seats_available", 0)
         .order("departure_date", { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error searching rides:", error);
+        throw error;
+      }
+
+      console.log("Search results:", data); // Debug log
       return data || [];
     },
     enabled: !!searchParams,
@@ -71,6 +78,8 @@ const Rides = () => {
     queryKey: ["next-available-ride", searchParams?.departure, searchParams?.destination],
     queryFn: async () => {
       if (!searchParams) return null;
+
+      console.log("Fetching next available ride..."); // Debug log
 
       const { data, error } = await supabase
         .from("rides")
@@ -83,13 +92,19 @@ const Rides = () => {
         .limit(1)
         .maybeSingle();
 
-      if (error) return null;
+      if (error) {
+        console.error("Error fetching next available ride:", error);
+        return null;
+      }
+
+      console.log("Next available ride:", data); // Debug log
       return data;
     },
     enabled: !!searchParams && searchResults.length === 0,
   });
 
   const handleSearch = (departure: string, destination: string, date: string) => {
+    console.log("Search initiated with:", { departure, destination, date }); // Debug log
     setSearchParams({ departure, destination, date });
   };
 
