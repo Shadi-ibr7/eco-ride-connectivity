@@ -6,6 +6,46 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 
+// Demo data for when no real rides exist
+const demoRides = [
+  {
+    id: "demo-1",
+    departure_city: "Paris",
+    arrival_city: "Lyon",
+    departure_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
+    arrival_time: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000), // 4 hours after departure
+    price: 25,
+    seats_available: 3,
+    is_electric_car: true,
+    profile: { name: "Marie D." },
+    driver_rating: 4.8
+  },
+  {
+    id: "demo-2",
+    departure_city: "Marseille",
+    arrival_city: "Nice",
+    departure_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
+    arrival_time: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000 + 2.5 * 60 * 60 * 1000), // 2.5 hours after departure
+    price: 18,
+    seats_available: 2,
+    is_electric_car: false,
+    profile: { name: "Thomas B." },
+    driver_rating: 4.5
+  },
+  {
+    id: "demo-3",
+    departure_city: "Bordeaux",
+    arrival_city: "Toulouse",
+    departure_date: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000), // 4 days from now
+    arrival_time: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000 + 2.5 * 60 * 60 * 1000), // 2.5 hours after departure
+    price: 20,
+    seats_available: 4,
+    is_electric_car: true,
+    profile: { name: "Sophie M." },
+    driver_rating: 4.9
+  }
+];
+
 interface SearchResultsProps {
   rides: any[];
   showNoResults: boolean;
@@ -15,8 +55,9 @@ interface SearchResultsProps {
 
 export const SearchResults = ({ rides, showNoResults, nextAvailableDate, onDateChange }: SearchResultsProps) => {
   const navigate = useNavigate();
+  const displayRides = rides.length > 0 ? rides : (!showNoResults ? demoRides : []);
 
-  if (!showNoResults && (!rides || rides.length === 0)) {
+  if (!showNoResults && displayRides.length === 0) {
     return (
       <Card className="mt-8">
         <CardContent className="p-6">
@@ -36,7 +77,7 @@ export const SearchResults = ({ rides, showNoResults, nextAvailableDate, onDateC
     );
   }
 
-  if (showNoResults && rides.length === 0 && nextAvailableDate) {
+  if (showNoResults && displayRides.length === 0 && nextAvailableDate) {
     return (
       <Card className="mt-8">
         <CardContent className="p-6">
@@ -58,7 +99,7 @@ export const SearchResults = ({ rides, showNoResults, nextAvailableDate, onDateC
 
   return (
     <div className="mt-8 space-y-4">
-      {rides.map((ride) => (
+      {displayRides.map((ride) => (
         <Card key={ride.id} className="overflow-hidden">
           <CardContent className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
