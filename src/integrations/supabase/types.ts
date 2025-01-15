@@ -39,6 +39,24 @@ export type Database = {
         }
         Relationships: []
       }
+      brands: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       driver_preferences: {
         Row: {
           created_at: string
@@ -70,14 +88,14 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "problematic_rides"
-            referencedColumns: ["passenger_id"]
+            referencedColumns: ["driver_id"]
           },
           {
             foreignKeyName: "driver_preferences_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "problematic_rides"
-            referencedColumns: ["driver_id"]
+            referencedColumns: ["passenger_id"]
           },
           {
             foreignKeyName: "driver_preferences_user_id_fkey"
@@ -125,14 +143,14 @@ export type Database = {
             columns: ["driver_id"]
             isOneToOne: false
             referencedRelation: "problematic_rides"
-            referencedColumns: ["passenger_id"]
+            referencedColumns: ["driver_id"]
           },
           {
             foreignKeyName: "driver_reviews_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
             referencedRelation: "problematic_rides"
-            referencedColumns: ["driver_id"]
+            referencedColumns: ["passenger_id"]
           },
           {
             foreignKeyName: "driver_reviews_driver_id_fkey"
@@ -146,14 +164,14 @@ export type Database = {
             columns: ["reviewer_id"]
             isOneToOne: false
             referencedRelation: "problematic_rides"
-            referencedColumns: ["passenger_id"]
+            referencedColumns: ["driver_id"]
           },
           {
             foreignKeyName: "driver_reviews_reviewer_id_fkey"
             columns: ["reviewer_id"]
             isOneToOne: false
             referencedRelation: "problematic_rides"
-            referencedColumns: ["driver_id"]
+            referencedColumns: ["passenger_id"]
           },
           {
             foreignKeyName: "driver_reviews_reviewer_id_fkey"
@@ -166,25 +184,46 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
+          birth_date: string | null
           created_at: string
           credits: number
+          first_name: string | null
           id: string
+          last_name: string | null
           name: string | null
+          phone: string | null
+          photo: string | null
           role: Database["public"]["Enums"]["user_role"] | null
+          username: string | null
         }
         Insert: {
+          address?: string | null
+          birth_date?: string | null
           created_at?: string
           credits?: number
+          first_name?: string | null
           id: string
+          last_name?: string | null
           name?: string | null
+          phone?: string | null
+          photo?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
+          username?: string | null
         }
         Update: {
+          address?: string | null
+          birth_date?: string | null
           created_at?: string
           credits?: number
+          first_name?: string | null
           id?: string
+          last_name?: string | null
           name?: string | null
+          phone?: string | null
+          photo?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
+          username?: string | null
         }
         Relationships: []
       }
@@ -213,14 +252,14 @@ export type Database = {
             columns: ["passenger_id"]
             isOneToOne: false
             referencedRelation: "problematic_rides"
-            referencedColumns: ["passenger_id"]
+            referencedColumns: ["driver_id"]
           },
           {
             foreignKeyName: "ride_bookings_passenger_id_fkey"
             columns: ["passenger_id"]
             isOneToOne: false
             referencedRelation: "problematic_rides"
-            referencedColumns: ["driver_id"]
+            referencedColumns: ["passenger_id"]
           },
           {
             foreignKeyName: "ride_bookings_passenger_id_fkey"
@@ -252,6 +291,7 @@ export type Database = {
           created_at: string
           departure_city: string
           departure_date: string
+          departure_time: string | null
           description: string | null
           driver_preferences: string[] | null
           id: string
@@ -269,6 +309,7 @@ export type Database = {
           created_at?: string
           departure_city: string
           departure_date: string
+          departure_time?: string | null
           description?: string | null
           driver_preferences?: string[] | null
           id?: string
@@ -286,6 +327,7 @@ export type Database = {
           created_at?: string
           departure_city?: string
           departure_date?: string
+          departure_time?: string | null
           description?: string | null
           driver_preferences?: string[] | null
           id?: string
@@ -303,14 +345,14 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "problematic_rides"
-            referencedColumns: ["passenger_id"]
+            referencedColumns: ["driver_id"]
           },
           {
             foreignKeyName: "rides_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "problematic_rides"
-            referencedColumns: ["driver_id"]
+            referencedColumns: ["passenger_id"]
           },
           {
             foreignKeyName: "rides_user_id_fkey"
@@ -345,8 +387,10 @@ export type Database = {
       vehicles: {
         Row: {
           brand: string
+          brand_id: string | null
           color: string
           created_at: string
+          energy_type: string | null
           first_registration_date: string
           id: string
           license_plate: string
@@ -356,8 +400,10 @@ export type Database = {
         }
         Insert: {
           brand: string
+          brand_id?: string | null
           color: string
           created_at?: string
+          energy_type?: string | null
           first_registration_date: string
           id?: string
           license_plate: string
@@ -367,8 +413,10 @@ export type Database = {
         }
         Update: {
           brand?: string
+          brand_id?: string | null
           color?: string
           created_at?: string
+          energy_type?: string | null
           first_registration_date?: string
           id?: string
           license_plate?: string
@@ -378,11 +426,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "vehicles_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "vehicles_brand_id_fkey"
+            columns: ["brand_id"]
             isOneToOne: false
-            referencedRelation: "problematic_rides"
-            referencedColumns: ["passenger_id"]
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "vehicles_user_id_fkey"
@@ -390,6 +438,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "problematic_rides"
             referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "vehicles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "problematic_rides"
+            referencedColumns: ["passenger_id"]
           },
           {
             foreignKeyName: "vehicles_user_id_fkey"
