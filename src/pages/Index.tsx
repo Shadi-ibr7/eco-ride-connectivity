@@ -53,7 +53,7 @@ const Index = () => {
         .gt("departure_date", new Date().toISOString())
         .order("departure_date", { ascending: true })
         .limit(1)
-        .single();
+        .maybeSingle(); // Changed from .single() to .maybeSingle()
 
       if (error) return null;
       return data;
