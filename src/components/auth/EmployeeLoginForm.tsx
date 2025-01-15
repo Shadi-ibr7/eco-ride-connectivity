@@ -67,7 +67,8 @@ export const EmployeeLoginForm = () => {
       if (error) throw error;
 
       toast.success("Mot de passe mis à jour avec succès");
-      navigate("/employee", { replace: true });
+      // Utilisation de window.location.href pour une redirection plus fiable
+      window.location.href = "/employee";
     } catch (error) {
       console.error("Error updating password:", error);
       toast.error("Erreur lors de la mise à jour du mot de passe");
@@ -125,7 +126,8 @@ export const EmployeeLoginForm = () => {
       }
 
       toast.success("Connexion réussie !");
-      navigate("/employee", { replace: true });
+      // Utilisation de window.location.href pour une redirection plus fiable
+      window.location.href = "/employee";
     } catch (error) {
       console.error("Error during login:", error);
       toast.error("Erreur lors de la connexion");
