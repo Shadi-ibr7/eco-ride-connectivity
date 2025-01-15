@@ -126,11 +126,16 @@ const RideDetails = () => {
   const [showBookingDialog, setShowBookingDialog] = useState(false);
   const [userCredits, setUserCredits] = useState<number | null>(null);
 
-  // Add the booking mutation
+  // Add the booking mutation with demo handling
   const bookRideMutation = useMutation({
     mutationFn: async () => {
       if (!id || !session?.user) throw new Error("Missing ride ID or user");
       
+      // If this is a demo ride, just show success message
+      if (id.startsWith('demo-')) {
+        return;
+      }
+
       const { error } = await supabase
         .from("ride_bookings")
         .insert({
@@ -158,7 +163,9 @@ const RideDetails = () => {
     },
     onSuccess: () => {
       toast.success("Réservation confirmée !");
-      queryClient.invalidateQueries({ queryKey: ["ride", id] });
+      if (!id?.startsWith('demo-')) {
+        queryClient.invalidateQueries({ queryKey: ["ride", id] });
+      }
       navigate("/profile");
     },
     onError: (error) => {
