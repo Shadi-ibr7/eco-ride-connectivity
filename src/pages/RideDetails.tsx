@@ -126,6 +126,47 @@ const RideDetails = () => {
   const [showBookingDialog, setShowBookingDialog] = useState(false);
   const [userCredits, setUserCredits] = useState<number | null>(null);
 
+  // Add the booking mutation
+  const bookRideMutation = useMutation({
+    mutationFn: async () => {
+      if (!id || !session?.user) throw new Error("Missing ride ID or user");
+      
+      const { error } = await supabase
+        .from("ride_bookings")
+        .insert({
+          ride_id: id,
+          passenger_id: session.user.id,
+        });
+
+      if (error) throw error;
+
+      // Update the user's credits
+      const { error: creditsError } = await supabase
+        .from("profiles")
+        .update({ credits: (userCredits || 0) - (ride?.price || 0) })
+        .eq("id", session.user.id);
+
+      if (creditsError) throw creditsError;
+
+      // Update available seats
+      const { error: seatsError } = await supabase
+        .from("rides")
+        .update({ seats_available: (ride?.seats_available || 1) - 1 })
+        .eq("id", id);
+
+      if (seatsError) throw seatsError;
+    },
+    onSuccess: () => {
+      toast.success("Réservation confirmée !");
+      queryClient.invalidateQueries({ queryKey: ["ride", id] });
+      navigate("/profile");
+    },
+    onError: (error) => {
+      console.error("Booking error:", error);
+      toast.error("Erreur lors de la réservation");
+    },
+  });
+
   // If we're on the create route, show the create form
   if (id === "create") {
     return (
