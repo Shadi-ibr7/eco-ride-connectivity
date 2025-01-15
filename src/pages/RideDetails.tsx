@@ -15,6 +15,7 @@ import { useState } from "react";
 import { BookRideDialog } from "@/components/BookRideDialog";
 import { RideStatusActions } from "@/components/RideStatusActions";
 import { RideReviewForm } from "@/components/RideReviewForm";
+import { CreateRideForm } from "@/components/CreateRideForm";
 
 type Review = {
   rating: number;
@@ -51,6 +52,24 @@ const RideDetails = () => {
   const queryClient = useQueryClient();
   const [showBookingDialog, setShowBookingDialog] = useState(false);
   const [userCredits, setUserCredits] = useState<number | null>(null);
+
+  // If we're on the create route, show the create form
+  if (id === "create") {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow container mx-auto px-4 py-8">
+          <Card>
+            <CardContent className="p-6">
+              <h2 className="text-2xl font-bold mb-6">Publier une annonce</h2>
+              <CreateRideForm />
+            </CardContent>
+          </Card>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   // Fetch ride details and driver reviews
   const { data: ride, isLoading: isLoadingRide } = useQuery({
