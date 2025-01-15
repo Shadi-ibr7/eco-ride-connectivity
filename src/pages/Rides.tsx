@@ -13,7 +13,28 @@ const Rides = () => {
     date: string;
   } | null>(null);
 
-  const { data: rides = [], isLoading } = useQuery({
+  // New query to fetch all upcoming rides
+  const { data: upcomingRides = [] } = useQuery({
+    queryKey: ["upcoming-rides"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("rides")
+        .select(`
+          *,
+          profile: profiles(name)
+        `)
+        .gt("departure_date", new Date().toISOString())
+        .gt("seats_available", 0)
+        .order("departure_date", { ascending: true })
+        .limit(50);
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Original search query
+  const { data: searchResults = [], isLoading } = useQuery({
     queryKey: ["rides", searchParams],
     queryFn: async () => {
       if (!searchParams) return [];
@@ -51,12 +72,12 @@ const Rides = () => {
         .gt("departure_date", new Date().toISOString())
         .order("departure_date", { ascending: true })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) return null;
       return data;
     },
-    enabled: !!searchParams && rides.length === 0,
+    enabled: !!searchParams && searchResults.length === 0,
   });
 
   const handleSearch = (departure: string, destination: string, date: string) => {
@@ -88,12 +109,22 @@ const Rides = () => {
         </section>
 
         <section className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-          <SearchResults 
-            rides={rides}
-            showNoResults={!!searchParams}
-            nextAvailableDate={nextAvailableRide ? new Date(nextAvailableRide.departure_date) : undefined}
-            onDateChange={handleDateChange}
-          />
+          {searchParams ? (
+            <SearchResults 
+              rides={searchResults}
+              showNoResults={!!searchParams}
+              nextAvailableDate={nextAvailableRide ? new Date(nextAvailableRide.departure_date) : undefined}
+              onDateChange={handleDateChange}
+            />
+          ) : (
+            <>
+              <h2 className="text-2xl font-semibold mb-6">Prochains trajets disponibles</h2>
+              <SearchResults 
+                rides={upcomingRides}
+                showNoResults={false}
+              />
+            </>
+          )}
         </section>
       </main>
 
