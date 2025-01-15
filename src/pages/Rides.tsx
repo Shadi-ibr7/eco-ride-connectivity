@@ -14,16 +14,20 @@ const Rides = () => {
   } | null>(null);
 
   // Query to fetch all upcoming rides
-  const { data: upcomingRides = [] } = useQuery({
+  const { data: upcomingRides = [], isLoading: isLoadingUpcoming } = useQuery({
     queryKey: ["upcoming-rides"],
     queryFn: async () => {
+      console.log("Fetching upcoming rides..."); // Debug log
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
       const { data, error } = await supabase
         .from("rides")
         .select(`
           *,
           profile: profiles(name)
         `)
-        .gt("departure_date", new Date().toISOString())
+        .gte("departure_date", today.toISOString())
         .gt("seats_available", 0)
         .order("departure_date", { ascending: true })
         .limit(50);
@@ -32,13 +36,14 @@ const Rides = () => {
         console.error("Error fetching rides:", error);
         throw error;
       }
-      console.log("Fetched rides:", data); // Pour debug
+
+      console.log("Fetched rides:", data); // Debug log
       return data || [];
     },
   });
 
   // Search query
-  const { data: searchResults = [], isLoading } = useQuery({
+  const { data: searchResults = [], isLoading: isLoadingSearch } = useQuery({
     queryKey: ["rides", searchParams],
     queryFn: async () => {
       if (!searchParams) return [];
@@ -113,7 +118,11 @@ const Rides = () => {
         </section>
 
         <section className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-          {searchParams ? (
+          {isLoadingUpcoming || isLoadingSearch ? (
+            <div className="text-center py-8">
+              <p>Chargement des trajets...</p>
+            </div>
+          ) : searchParams ? (
             <SearchResults 
               rides={searchResults}
               showNoResults={!!searchParams}
