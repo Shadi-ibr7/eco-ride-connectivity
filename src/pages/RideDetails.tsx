@@ -11,7 +11,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BookRideDialog } from "@/components/BookRideDialog";
 import { RideStatusActions } from "@/components/RideStatusActions";
 import { RideReviewForm } from "@/components/RideReviewForm";
@@ -275,28 +275,48 @@ const RideDetails = () => {
 
   const canBook = isDemoRide || (ride?.seats_available > 0 && (!session?.user || (userCredits && userCredits >= (ride?.price || 0))));
 
-  const handleBookClick = () => {
+  const handleBookClick = async () => {
     if (!session) {
       navigate("/auth");
       return;
     }
 
-    if (!isDemoRide && (!userCredits || userCredits < (ride?.price || 0))) {
-      toast.error("Vous n'avez pas assez de crédits");
-      return;
-    }
-
-    setShowBookingDialog(true);
-  };
-
-  const handleBookingConfirm = () => {
     if (isDemoRide) {
       toast.success("Réservation de démonstration confirmée !");
       navigate("/profile");
       return;
     }
-    bookRideMutation.mutate();
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+        body: { 
+          rideId: id,
+          price: ride?.price,
+          departure_city: ride?.departure_city,
+          arrival_city: ride?.arrival_city
+        }
+      })
+
+      if (error) throw error;
+
+      // Redirect to Stripe Checkout
+      window.location.href = data.url;
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      toast.error("Erreur lors de la création de la session de paiement");
+    }
   };
+
+  useEffect(() => {
+    // Check for successful payment
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('success') === 'true') {
+      toast.success("Paiement réussi ! Votre trajet est réservé.");
+      bookRideMutation.mutate();
+    } else if (urlParams.get('canceled') === 'true') {
+      toast.error("Le paiement a été annulé.");
+    }
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col">
