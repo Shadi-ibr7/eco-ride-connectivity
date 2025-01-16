@@ -27,25 +27,34 @@ export const PaymentForm = ({
     try {
       setProcessing(true);
       
+      // Log the received props for debugging
+      console.log("PaymentForm received props:", {
+        amount,
+        rideId,
+        departure_city,
+        arrival_city
+      });
+
       // Ensure amount is a valid number
       const price = Number(amount);
       if (isNaN(price) || price <= 0) {
-        toast.error("Montant invalide");
+        console.error("Invalid price:", price);
+        toast.error("Le montant du trajet est invalide");
         return;
       }
 
       // Validate required fields
-      if (!rideId || !departure_city || !arrival_city) {
-        toast.error("Informations du trajet manquantes");
+      if (!rideId) {
+        console.error("Missing rideId");
+        toast.error("L'identifiant du trajet est manquant");
         return;
       }
 
-      console.log("Sending payment request with data:", {
-        rideId,
-        price,
-        departure_city,
-        arrival_city
-      });
+      if (!departure_city || !arrival_city) {
+        console.error("Missing cities:", { departure_city, arrival_city });
+        toast.error("Les villes de départ et d'arrivée sont manquantes");
+        return;
+      }
 
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 

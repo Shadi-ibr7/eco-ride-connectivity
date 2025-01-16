@@ -22,6 +22,10 @@ export const BookRideDialog = ({
   departure_city,
   arrival_city,
 }: BookRideDialogProps) => {
+  if (!rideId || !departure_city || !arrival_city) {
+    console.error("Missing required ride information:", { rideId, departure_city, arrival_city });
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
