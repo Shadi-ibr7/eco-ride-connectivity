@@ -38,6 +38,19 @@ serve(async (req) => {
 
     console.log("Creating Stripe session with amount:", amount)
 
+    // Clean up URLs by removing any trailing colons and ensuring proper formatting
+    const cleanUrl = (url: string) => {
+      return url.replace(/:\/?$/, '').replace(/([^:])\/+$/, '$1');
+    };
+
+    const cleanSuccessUrl = cleanUrl(success_url);
+    const cleanCancelUrl = cleanUrl(cancel_url);
+
+    console.log("Cleaned URLs:", {
+      successUrl: cleanSuccessUrl,
+      cancelUrl: cleanCancelUrl
+    });
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [
@@ -54,8 +67,8 @@ serve(async (req) => {
         },
       ],
       mode: "payment",
-      success_url: success_url,
-      cancel_url: cancel_url,
+      success_url: cleanSuccessUrl,
+      cancel_url: cleanCancelUrl,
       metadata: {
         rideId,
         departure_city,
