@@ -73,7 +73,8 @@ const RideDetails = () => {
         return;
       }
 
-      const baseUrl = window.location.origin;
+      // Construct the base URL without the trailing slash
+      const baseUrl = window.location.origin.replace(/\/$/, '');
       const successUrl = `${baseUrl}/rides/${id}?success=true`;
       const cancelUrl = `${baseUrl}/rides/${id}?canceled=true`;
       
