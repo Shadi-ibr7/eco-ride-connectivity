@@ -52,7 +52,12 @@ serve(async (req) => {
         rideId,
         departure_city,
         arrival_city
-      }
+      },
+      submit_type: "pay",
+      payment_intent_data: {
+        capture_method: "automatic",
+      },
+      locale: "fr"
     })
 
     console.log("Checkout session created:", session.id)
