@@ -24,40 +24,67 @@ const handler = async (req: Request): Promise<Response> => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const { rideId }: CancellationRequest = await req.json();
 
-    // Get ride details and passengers
-    const { data: ride } = await supabase
+    console.log("Processing cancellation for ride:", rideId);
+
+    // Get ride details with passenger information through bookings
+    const { data: ride, error: rideError } = await supabase
       .from("rides")
       .select(`
         *,
         profile:profiles!rides_user_id_fkey(name),
         bookings:ride_bookings(
           passenger:profiles(
-            name,
-            id
+            id,
+            name
           )
         )
       `)
       .eq("id", rideId)
       .single();
 
+    if (rideError) {
+      console.error("Error fetching ride:", rideError);
+      throw rideError;
+    }
+
     if (!ride) {
       throw new Error("Ride not found");
     }
 
-    // Send email to each passenger
+    console.log("Found ride with bookings:", ride);
+
+    // For each booking, get the passenger's email from auth.users
     const emailPromises = ride.bookings.map(async (booking: any) => {
       const passenger = booking.passenger;
       if (!passenger) return;
 
+      // Get user's email from auth.users using the profile id
+      const { data: userData, error: userError } = await supabase
+        .auth
+        .admin
+        .getUserById(passenger.id);
+
+      if (userError) {
+        console.error("Error fetching user data:", userError);
+        throw userError;
+      }
+
+      if (!userData?.email) {
+        console.error("No email found for user:", passenger.id);
+        return;
+      }
+
+      console.log("Sending email to:", userData.email);
+
       const emailContent = {
         from: "Eco Ride <notification@ecoride.com>",
-        to: [passenger.id], // Using passenger ID as email for now
+        to: [userData.email],
         subject: "Annulation de votre covoiturage",
         html: `
           <h2>Votre covoiturage a été annulé</h2>
           <p>Bonjour ${passenger.name},</p>
           <p>Nous vous informons que votre covoiturage de ${ride.departure_city} à ${ride.arrival_city} 
-          prévu le ${new Date(ride.departure_date).toLocaleDateString('fr-FR')} a été annulé par le conducteur.</p>
+          prévu le ${new Date(ride.departure_date).toLocaleDateString('fr-FR')} a été annulé.</p>
           <p>Vos crédits ont été remboursés automatiquement.</p>
           <p>Cordialement,<br>L'équipe Eco Ride</p>
         `,
@@ -73,8 +100,12 @@ const handler = async (req: Request): Promise<Response> => {
       });
 
       if (!res.ok) {
-        throw new Error(`Failed to send email to ${passenger.name}`);
+        const error = await res.text();
+        console.error("Error sending email:", error);
+        throw new Error(`Failed to send email to ${passenger.name}: ${error}`);
       }
+
+      console.log("Email sent successfully to:", userData.email);
     });
 
     await Promise.all(emailPromises);
