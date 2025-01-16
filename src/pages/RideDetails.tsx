@@ -130,8 +130,8 @@ const RideDetails = () => {
     mutationFn: async () => {
       if (!id || !session?.user) throw new Error("Missing ride ID or user");
       
-      // If this is a demo ride, just show success message
-      if (id.startsWith('demo-')) {
+      // If this is a demo ride, just return without making API calls
+      if (isDemoRide) {
         return;
       }
 
@@ -162,9 +162,6 @@ const RideDetails = () => {
     },
     onSuccess: () => {
       toast.success("Réservation confirmée !");
-      if (!id?.startsWith('demo-')) {
-        queryClient.invalidateQueries({ queryKey: ["ride", id] });
-      }
       navigate("/profile");
     },
     onError: (error) => {
@@ -284,7 +281,7 @@ const RideDetails = () => {
       return;
     }
 
-    if (!userCredits || userCredits < (ride?.price || 0)) {
+    if (!isDemoRide && (!userCredits || userCredits < (ride?.price || 0))) {
       toast.error("Vous n'avez pas assez de crédits");
       return;
     }
@@ -293,6 +290,11 @@ const RideDetails = () => {
   };
 
   const handleBookingConfirm = () => {
+    if (isDemoRide) {
+      toast.success("Réservation de démonstration confirmée !");
+      navigate("/profile");
+      return;
+    }
     bookRideMutation.mutate();
   };
 
