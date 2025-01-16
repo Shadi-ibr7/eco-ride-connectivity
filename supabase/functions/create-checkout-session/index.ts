@@ -38,13 +38,13 @@ serve(async (req) => {
 
     console.log("Creating Stripe session with amount:", amount)
 
-    // Clean up URLs by removing any trailing colons and ensuring proper formatting
+    // Clean up URLs by removing any trailing colons, ports, and ensuring proper formatting
     const cleanUrl = (url: string) => {
-      return url.replace(/:\/?$/, '').replace(/([^:])\/+$/, '$1');
+      return new URL(url).origin + new URL(url).pathname;
     };
 
-    const cleanSuccessUrl = cleanUrl(success_url);
-    const cleanCancelUrl = cleanUrl(cancel_url);
+    const cleanSuccessUrl = `${cleanUrl(success_url)}/rides/${rideId}?success=true`;
+    const cleanCancelUrl = `${cleanUrl(cancel_url)}/rides/${rideId}?canceled=true`;
 
     console.log("Cleaned URLs:", {
       successUrl: cleanSuccessUrl,
