@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { rideId, price, departure_city, arrival_city } = await req.json()
+    const { rideId, price, departure_city, arrival_city, success_url, cancel_url } = await req.json()
 
     // Vérification des paramètres requis
     if (!rideId || !price || !departure_city || !arrival_city) {
@@ -23,6 +23,11 @@ serve(async (req) => {
     console.log('Creating checkout session for ride:', rideId)
     console.log('Price:', price)
     console.log('Route:', departure_city, '-', arrival_city)
+
+    if (!Deno.env.get('STRIPE_SECRET_KEY')) {
+      console.error('STRIPE_SECRET_KEY is not set')
+      throw new Error('Stripe secret key is not configured')
+    }
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -40,8 +45,8 @@ serve(async (req) => {
         },
       ],
       mode: 'payment',
-      success_url: `${req.headers.get('origin')}/rides/${rideId}?success=true`,
-      cancel_url: `${req.headers.get('origin')}/rides/${rideId}?canceled=true`,
+      success_url: success_url,
+      cancel_url: cancel_url,
     })
 
     console.log('Checkout session created:', session.id)
