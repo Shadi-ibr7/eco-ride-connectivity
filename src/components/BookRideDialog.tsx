@@ -37,12 +37,14 @@ export const BookRideDialog = ({
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold flex items-center gap-2">
-              <AlertTriangle className="h-6 w-6 text-yellow-500" />
+            <DialogTitle className="text-2xl font-semibold flex items-center gap-3 text-ecogreen">
+              <AlertTriangle className="h-8 w-8 text-yellow-500" />
               Configuration requise
             </DialogTitle>
-            <DialogDescription className="text-base">
-              La configuration de paiement n'est pas complète. Veuillez contacter l'administrateur du site.
+            <DialogDescription className="text-lg mt-4 text-gray-600">
+              La configuration de paiement n'est pas complète.
+              <br />
+              Veuillez contacter l'administrateur du site.
             </DialogDescription>
           </DialogHeader>
         </DialogContent>
