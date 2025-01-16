@@ -15,6 +15,15 @@ serve(async (req) => {
   try {
     const { rideId, price, departure_city, arrival_city } = await req.json()
 
+    // Vérification des paramètres requis
+    if (!rideId || !price || !departure_city || !arrival_city) {
+      throw new Error('Missing required parameters')
+    }
+
+    console.log('Creating checkout session for ride:', rideId)
+    console.log('Price:', price)
+    console.log('Route:', departure_city, '-', arrival_city)
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -35,6 +44,8 @@ serve(async (req) => {
       cancel_url: `${req.headers.get('origin')}/rides/${rideId}?canceled=true`,
     })
 
+    console.log('Checkout session created:', session.id)
+
     return new Response(
       JSON.stringify({ sessionId: session.id, url: session.url }),
       {
@@ -43,6 +54,7 @@ serve(async (req) => {
       }
     )
   } catch (error) {
+    console.error('Error creating checkout session:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       {
