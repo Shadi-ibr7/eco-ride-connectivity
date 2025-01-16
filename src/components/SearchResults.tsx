@@ -5,6 +5,7 @@ import { Zap, User, Calendar, Clock, Star } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 // Demo data for when no real rides exist
 const demoRides = [
@@ -56,6 +57,14 @@ interface SearchResultsProps {
 export const SearchResults = ({ rides, showNoResults, nextAvailableDate, onDateChange }: SearchResultsProps) => {
   const navigate = useNavigate();
   const displayRides = rides.length > 0 ? rides : (!showNoResults ? demoRides : []);
+
+  const handleRideClick = (ride: any) => {
+    if (ride.id.toString().startsWith('demo-')) {
+      toast.info("Ceci est un trajet de démonstration. Veuillez rechercher des trajets réels.");
+      return;
+    }
+    navigate(`/rides/${ride.id}`);
+  };
 
   if (!showNoResults && displayRides.length === 0) {
     return (
@@ -154,7 +163,7 @@ export const SearchResults = ({ rides, showNoResults, nextAvailableDate, onDateC
                 </div>
                 <Button 
                   className="bg-ecogreen hover:bg-ecogreen-light"
-                  onClick={() => navigate(`/rides/${ride.id}`)}
+                  onClick={() => handleRideClick(ride)}
                 >
                   Détails
                 </Button>
