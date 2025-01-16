@@ -63,25 +63,35 @@ const RideDetails = () => {
   const handleBookConfirm = async () => {
     try {
       setIsLoading(true);
+      
+      if (!ride) {
+        toast({
+          title: "Erreur",
+          description: "Informations du trajet manquantes",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const baseUrl = window.location.origin;
       const successUrl = `${baseUrl}/rides/${id}?success=true`;
       const cancelUrl = `${baseUrl}/rides/${id}?canceled=true`;
       
       console.log("Creating checkout session with params:", { 
-        rideId: id,
-        price: ride?.price,
-        departure_city: ride?.departure_city,
-        arrival_city: ride?.arrival_city,
+        rideId: ride.id,
+        price: ride.price,
+        departure_city: ride.departure_city,
+        arrival_city: ride.arrival_city,
         success_url: successUrl,
         cancel_url: cancelUrl
       });
 
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
-          rideId: id,
-          price: ride?.price,
-          departure_city: ride?.departure_city,
-          arrival_city: ride?.arrival_city,
+          rideId: ride.id,
+          price: ride.price,
+          departure_city: ride.departure_city,
+          arrival_city: ride.arrival_city,
           success_url: successUrl,
           cancel_url: cancelUrl
         }

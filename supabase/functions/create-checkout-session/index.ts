@@ -17,6 +17,11 @@ serve(async (req) => {
       arrival_city
     })
 
+    // Validate required fields
+    if (!rideId || !departure_city || !arrival_city) {
+      throw new Error("Missing required fields")
+    }
+
     // Ensure price is a valid number and convert to cents
     const amount = Math.round(Number(price) * 100)
     if (isNaN(amount) || amount <= 0) {

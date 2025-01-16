@@ -34,6 +34,12 @@ export const PaymentForm = ({
         return;
       }
 
+      // Validate required fields
+      if (!rideId || !departure_city || !arrival_city) {
+        toast.error("Informations du trajet manquantes");
+        return;
+      }
+
       console.log("Sending payment request with data:", {
         rideId,
         price,
