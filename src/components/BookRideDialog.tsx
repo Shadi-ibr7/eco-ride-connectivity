@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { PaymentForm } from "./PaymentForm";
@@ -35,19 +35,16 @@ export const BookRideDialog = ({
   if (!stripePromise) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-md bg-ecogreen-DEFAULT text-white">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold flex items-center gap-2">
-              <AlertTriangle className="h-6 w-6" />
+              <AlertTriangle className="h-6 w-6 text-yellow-500" />
               Configuration requise
             </DialogTitle>
+            <DialogDescription className="text-base">
+              La configuration de paiement n'est pas complète. Veuillez contacter l'administrateur du site.
+            </DialogDescription>
           </DialogHeader>
-          <div className="p-4 rounded-lg bg-ecogreen-light/10">
-            <p className="text-white/90">
-              Veuillez configurer votre clé publique Stripe dans les variables d'environnement (.env) :
-              VITE_STRIPE_PUBLIC_KEY=votre_clé_publique_stripe
-            </p>
-          </div>
         </DialogContent>
       </Dialog>
     );
@@ -58,6 +55,9 @@ export const BookRideDialog = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Réserver ce trajet</DialogTitle>
+          <DialogDescription>
+            Trajet de {departure_city} à {arrival_city}
+          </DialogDescription>
         </DialogHeader>
         <Elements stripe={stripePromise}>
           <PaymentForm
