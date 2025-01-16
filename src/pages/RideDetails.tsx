@@ -273,7 +273,7 @@ const RideDetails = () => {
       ride.driver_reviews.length
     : null;
 
-  const canBook = !isDemoRide && ride.seats_available > 0 && (!session?.user || (userCredits && userCredits >= ride.price));
+  const canBook = isDemoRide || (ride?.seats_available > 0 && (!session?.user || (userCredits && userCredits >= (ride?.price || 0))));
 
   const handleBookClick = () => {
     if (!session) {
