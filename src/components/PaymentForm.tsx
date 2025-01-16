@@ -26,33 +26,17 @@ export const PaymentForm = ({
   const handleSubmit = async () => {
     try {
       setProcessing(true);
-      
-      // Log the received props for debugging
-      console.log("PaymentForm received props:", {
-        amount,
-        rideId,
-        departure_city,
-        arrival_city
-      });
 
       // Ensure amount is a valid number
       const price = Number(amount);
       if (isNaN(price) || price <= 0) {
-        console.error("Invalid price:", price);
         toast.error("Le montant du trajet est invalide");
         return;
       }
 
       // Validate required fields
-      if (!rideId) {
-        console.error("Missing rideId");
-        toast.error("L'identifiant du trajet est manquant");
-        return;
-      }
-
-      if (!departure_city || !arrival_city) {
-        console.error("Missing cities:", { departure_city, arrival_city });
-        toast.error("Les villes de départ et d'arrivée sont manquantes");
+      if (!rideId || !departure_city || !arrival_city) {
+        toast.error("Informations du trajet manquantes");
         return;
       }
 

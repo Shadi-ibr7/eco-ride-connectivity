@@ -122,7 +122,7 @@ const RideDetails = () => {
       console.log("Redirecting to checkout URL:", data.url);
       window.location.href = data.url;
     } catch (error) {
-      console.error('Error creating checkout session:', error);
+      console.error('Error:', error);
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la réservation",
@@ -131,6 +131,8 @@ const RideDetails = () => {
       setIsLoading(false);
     }
   };
+
+  // ... keep existing code (render section)
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -237,6 +239,9 @@ const RideDetails = () => {
         onConfirm={handleBookConfirm}
         rideCost={ride?.price || 0}
         isLoading={isLoading}
+        rideId={ride?.id}
+        departure_city={ride?.departure_city}
+        arrival_city={ride?.arrival_city}
       />
 
       <Footer />
