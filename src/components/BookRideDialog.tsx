@@ -8,15 +8,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Loader2 } from "lucide-react";
 
 interface BookRideDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
   rideCost: number;
+  isLoading?: boolean;
 }
 
-export const BookRideDialog = ({ isOpen, onClose, onConfirm, rideCost }: BookRideDialogProps) => {
+export const BookRideDialog = ({ isOpen, onClose, onConfirm, rideCost, isLoading }: BookRideDialogProps) => {
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent>
@@ -27,8 +29,17 @@ export const BookRideDialog = ({ isOpen, onClose, onConfirm, rideCost }: BookRid
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onClose}>Annuler</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>Confirmer</AlertDialogAction>
+          <AlertDialogCancel onClick={onClose} disabled={isLoading}>Annuler</AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={onConfirm} 
+            disabled={isLoading}
+            className="relative"
+          >
+            {isLoading && (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin absolute left-2" />
+            )}
+            Confirmer
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
