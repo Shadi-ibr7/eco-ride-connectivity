@@ -3,7 +3,12 @@ import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { PaymentForm } from "./PaymentForm";
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY!);
+const stripeKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
+if (!stripeKey) {
+  console.error("Missing Stripe public key. Please check your environment variables.");
+}
+
+const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
 interface BookRideDialogProps {
   isOpen: boolean;
@@ -20,6 +25,21 @@ export const BookRideDialog = ({
   rideCost,
   isLoading,
 }: BookRideDialogProps) => {
+  if (!stripePromise) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Error</DialogTitle>
+          </DialogHeader>
+          <p className="text-red-500">
+            Payment system is not properly configured. Please try again later.
+          </p>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
