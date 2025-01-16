@@ -5,43 +5,75 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Card } from "./ui/card";
 import { CreditCard, DollarSign, Apple } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface PaymentFormProps {
   amount: number;
   onSuccess: () => void;
   onCancel: () => void;
   isLoading?: boolean;
+  rideId?: string;
+  departure_city?: string;
+  arrival_city?: string;
 }
 
-export const PaymentForm = ({ amount, onSuccess, onCancel, isLoading }: PaymentFormProps) => {
-  const stripe = useStripe();
-  const elements = useElements();
+export const PaymentForm = ({ 
+  amount, 
+  onSuccess, 
+  onCancel, 
+  isLoading,
+  rideId,
+  departure_city,
+  arrival_city 
+}: PaymentFormProps) => {
   const [paymentMethod, setPaymentMethod] = useState<"card" | "paypal" | "apple">("card");
   const [name, setName] = useState("");
   const [city, setCity] = useState("");
+  const [processing, setProcessing] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!stripe || !elements) return;
+    
+    try {
+      setProcessing(true);
+      
+      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+        body: { 
+          rideId,
+          price: amount,
+          departure_city,
+          arrival_city
+        }
+      });
 
-    const { error } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: window.location.origin + "/success",
-      },
-    });
+      if (error) {
+        console.error('Error creating checkout session:', error);
+        toast.error("Erreur lors de la création de la session de paiement");
+        return;
+      }
 
-    if (error) {
-      console.error("Payment error:", error);
-    } else {
-      onSuccess();
+      if (!data?.url) {
+        console.error('No checkout URL returned:', data);
+        toast.error("Erreur lors de la création de la session de paiement");
+        return;
+      }
+
+      // Redirect to Stripe Checkout
+      window.location.href = data.url;
+      
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error("Une erreur est survenue lors du paiement");
+    } finally {
+      setProcessing(false);
     }
   };
 
   return (
     <Card className="p-6 max-w-md mx-auto bg-ecogreen-DEFAULT text-white">
-      <h2 className="text-2xl font-bold mb-2">Payment Method</h2>
-      <p className="text-gray-300 mb-6">Add a new payment method to your account.</p>
+      <h2 className="text-2xl font-bold mb-2">Méthode de paiement</h2>
+      <p className="text-gray-300 mb-6">Choisissez votre méthode de paiement préférée.</p>
 
       <div className="grid grid-cols-3 gap-4 mb-6">
         <button
@@ -53,7 +85,7 @@ export const PaymentForm = ({ amount, onSuccess, onCancel, isLoading }: PaymentF
           }`}
         >
           <CreditCard className="h-6 w-6" />
-          <span>Card</span>
+          <span>Carte</span>
         </button>
         <button
           onClick={() => setPaymentMethod("paypal")}
@@ -75,36 +107,38 @@ export const PaymentForm = ({ amount, onSuccess, onCancel, isLoading }: PaymentF
           }`}
         >
           <Apple className="h-6 w-6" />
-          <span>Apple</span>
+          <span>Apple Pay</span>
         </button>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="name" className="text-white">Name</Label>
+          <Label htmlFor="name" className="text-white">Nom</Label>
           <Input
             id="name"
             type="text"
-            placeholder="First Last"
+            placeholder="Prénom Nom"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="bg-ecogreen-DEFAULT border-gray-600 text-white placeholder:text-gray-400 focus:border-white"
+            required
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="city" className="text-white">City</Label>
+          <Label htmlFor="city" className="text-white">Ville</Label>
           <Input
             id="city"
             type="text"
             value={city}
             onChange={(e) => setCity(e.target.value)}
             className="bg-ecogreen-DEFAULT border-gray-600 text-white placeholder:text-gray-400 focus:border-white"
+            required
           />
         </div>
 
         <div className="space-y-2">
-          <Label className="text-white">Card Details</Label>
+          <Label className="text-white">Détails de la carte</Label>
           <div className="p-3 border border-gray-600 rounded-md">
             <CardElement
               options={{
@@ -127,10 +161,10 @@ export const PaymentForm = ({ amount, onSuccess, onCancel, isLoading }: PaymentF
 
         <Button
           type="submit"
-          disabled={!stripe || isLoading}
+          disabled={processing || isLoading}
           className="w-full bg-white text-ecogreen-DEFAULT hover:bg-gray-100"
         >
-          {isLoading ? "Processing..." : "Continue"}
+          {processing ? "Traitement en cours..." : `Payer ${amount}€`}
         </Button>
       </form>
     </Card>

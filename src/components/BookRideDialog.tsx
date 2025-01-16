@@ -17,6 +17,9 @@ interface BookRideDialogProps {
   onConfirm: () => Promise<void>;
   rideCost: number;
   isLoading?: boolean;
+  rideId?: string;
+  departure_city?: string;
+  arrival_city?: string;
 }
 
 export const BookRideDialog = ({
@@ -25,6 +28,9 @@ export const BookRideDialog = ({
   onConfirm,
   rideCost,
   isLoading,
+  rideId,
+  departure_city,
+  arrival_city,
 }: BookRideDialogProps) => {
   if (!stripePromise) {
     return (
@@ -33,12 +39,12 @@ export const BookRideDialog = ({
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold flex items-center gap-2">
               <AlertTriangle className="h-6 w-6" />
-              Configuration Error
+              Erreur de configuration
             </DialogTitle>
           </DialogHeader>
           <div className="p-4 rounded-lg bg-ecogreen-light/10">
             <p className="text-white/90">
-              The payment system is not properly configured. Please contact support or try again later.
+              Le système de paiement n'est pas correctement configuré. Veuillez contacter le support ou réessayer plus tard.
             </p>
           </div>
         </DialogContent>
@@ -50,7 +56,7 @@ export const BookRideDialog = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Book this ride</DialogTitle>
+          <DialogTitle>Réserver ce trajet</DialogTitle>
         </DialogHeader>
         <Elements stripe={stripePromise}>
           <PaymentForm
@@ -58,6 +64,9 @@ export const BookRideDialog = ({
             onSuccess={onConfirm}
             onCancel={onClose}
             isLoading={isLoading}
+            rideId={rideId}
+            departure_city={departure_city}
+            arrival_city={arrival_city}
           />
         </Elements>
       </DialogContent>

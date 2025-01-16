@@ -10,19 +10,28 @@ serve(async (req) => {
   try {
     const { rideId, price, departure_city, arrival_city } = await req.json();
 
-    const session = await stripe.paymentIntents.create({
-      amount: Math.round(price * 100), // Convert to cents
-      currency: "eur",
+    const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
-      metadata: {
-        rideId,
-        departure_city,
-        arrival_city,
-      },
+      line_items: [
+        {
+          price_data: {
+            currency: "eur",
+            product_data: {
+              name: `Trajet ${departure_city} → ${arrival_city}`,
+              description: `Réservation du trajet de ${departure_city} à ${arrival_city}`,
+            },
+            unit_amount: Math.round(price * 100), // Stripe expects amount in cents
+          },
+          quantity: 1,
+        },
+      ],
+      mode: "payment",
+      success_url: `${req.headers.get("origin")}/rides/${rideId}?success=true`,
+      cancel_url: `${req.headers.get("origin")}/rides/${rideId}?canceled=true`,
     });
 
     return new Response(
-      JSON.stringify({ clientSecret: session.client_secret }),
+      JSON.stringify({ url: session.url }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
