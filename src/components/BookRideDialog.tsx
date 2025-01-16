@@ -1,10 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Elements } from "@stripe/react-stripe-js";
-import { loadStripe } from "@stripe/stripe-js";
 import { PaymentForm } from "./PaymentForm";
-
-const stripeKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
-const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
 interface BookRideDialogProps {
   isOpen: boolean;
@@ -36,17 +31,15 @@ export const BookRideDialog = ({
             Trajet de {departure_city} à {arrival_city}
           </DialogDescription>
         </DialogHeader>
-        <Elements stripe={stripePromise}>
-          <PaymentForm
-            amount={rideCost}
-            onSuccess={onConfirm}
-            onCancel={onClose}
-            isLoading={isLoading}
-            rideId={rideId}
-            departure_city={departure_city}
-            arrival_city={arrival_city}
-          />
-        </Elements>
+        <PaymentForm
+          amount={rideCost}
+          onSuccess={onConfirm}
+          onCancel={onClose}
+          isLoading={isLoading}
+          rideId={rideId}
+          departure_city={departure_city}
+          arrival_city={arrival_city}
+        />
       </DialogContent>
     </Dialog>
   );
