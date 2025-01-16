@@ -5,8 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { BookRideDialog } from "@/components/BookRideDialog";
-import { CancelRideDialog } from "@/components/CancelRideDialog";
 import { RideActions } from "@/components/RideActions";
 import { RideStatusActions } from "@/components/RideStatusActions";
 import { RideReviewForm } from "@/components/RideReviewForm";
@@ -15,11 +13,21 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Car, Calendar, Clock, MapPin, Users, Leaf, Euro } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const RideDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+    };
+    getUser();
+  }, []);
 
   const { data: ride, isLoading, error } = useQuery({
     queryKey: ["ride", id],
@@ -36,7 +44,7 @@ const RideDetails = () => {
   });
 
   const handleBookClick = async () => {
-    if (!ride || !user) {
+    if (!ride || !currentUser) {
       toast({
         title: "Erreur",
         description: "Vous devez être connecté pour réserver un trajet",
@@ -123,9 +131,21 @@ const RideDetails = () => {
             <p>{format(new Date(ride.departure_date), "PPPP", { locale: fr })}</p>
             <p>{ride.price} €</p>
             <Button onClick={handleBookClick}>Réserver</Button>
-            <RideActions ride={ride} />
-            <RideStatusActions ride={ride} />
-            <RideReviewForm rideId={ride.id} />
+            <RideActions 
+              rideId={ride.id} 
+              isDriver={currentUser?.id === ride.user_id}
+              canBook={currentUser?.id !== ride.user_id}
+              onBookClick={handleBookClick}
+            />
+            <RideStatusActions 
+              rideId={ride.id}
+              status={ride.status}
+              isDriver={currentUser?.id === ride.user_id}
+            />
+            <RideReviewForm 
+              rideId={ride.id}
+              driverId={ride.user_id}
+            />
           </Card>
         )}
       </main>
