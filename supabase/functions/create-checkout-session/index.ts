@@ -3,14 +3,18 @@ import { stripe } from "../_shared/stripe.ts"
 import { corsHeaders } from "../_shared/cors.ts"
 
 serve(async (req) => {
+  console.log("Function called with method:", req.method)
+  
   if (req.method === "OPTIONS") {
+    console.log("Handling OPTIONS request")
     return new Response("ok", { headers: corsHeaders })
   }
 
   try {
+    console.log("Starting to process request body")
     const { rideId, price, departure_city, arrival_city, success_url, cancel_url } = await req.json()
 
-    console.log("Starting checkout session creation with params:", {
+    console.log("Request parameters:", {
       rideId,
       price,
       departure_city,
