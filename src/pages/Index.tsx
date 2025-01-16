@@ -20,20 +20,49 @@ const Index = () => {
     queryFn: async () => {
       if (!searchParams) return [];
 
-      const { data, error } = await supabase
+      console.log("Fetching upcoming rides...");
+      
+      let query = supabase
         .from("rides")
         .select(`
-          *,
-          profile: profiles(name)
+          id,
+          departure_city,
+          arrival_city,
+          departure_date,
+          arrival_time,
+          price,
+          seats_available,
+          is_electric_car,
+          profile:profiles(name)
         `)
-        .eq("departure_city", searchParams.departure)
-        .eq("arrival_city", searchParams.destination)
-        .gte("departure_date", searchParams.date)
-        .lt("departure_date", new Date(new Date(searchParams.date).setDate(new Date(searchParams.date).getDate() + 1)).toISOString())
-        .gt("seats_available", 0)
-        .order("departure_date", { ascending: true });
+        .gt("seats_available", 0);
 
-      if (error) throw error;
+      if (searchParams.departure) {
+        query = query.eq("departure_city", searchParams.departure);
+      }
+      if (searchParams.destination) {
+        query = query.eq("arrival_city", searchParams.destination);
+      }
+      if (searchParams.date) {
+        const startDate = new Date(searchParams.date);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(searchParams.date);
+        endDate.setHours(23, 59, 59, 999);
+        
+        query = query.gte("departure_date", startDate.toISOString())
+                    .lt("departure_date", endDate.toISOString());
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("Error fetching rides:", error);
+        throw error;
+      }
+
+      console.log("Total rides in database:", data?.length || 0);
+      console.log("Fetched rides:", data);
+
       return data || [];
     },
     enabled: !!searchParams,
@@ -53,7 +82,7 @@ const Index = () => {
         .gt("departure_date", new Date().toISOString())
         .order("departure_date", { ascending: true })
         .limit(1)
-        .maybeSingle(); // Changed from .single() to .maybeSingle()
+        .maybeSingle();
 
       if (error) return null;
       return data;
@@ -62,6 +91,7 @@ const Index = () => {
   });
 
   const handleSearch = (departure: string, destination: string, date: string) => {
+    console.log("Search params:", { departure, destination, date });
     setSearchParams({ departure, destination, date });
   };
 
@@ -162,7 +192,7 @@ const Index = () => {
           </div>
         </div>
       </section>
-
+      
       {/* Search Results */}
       <section className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         <SearchResults 
@@ -174,7 +204,6 @@ const Index = () => {
       </section>
 
       <HowItWorks />
-
       <Footer />
     </div>
   );
