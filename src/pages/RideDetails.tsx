@@ -22,6 +22,18 @@ const RideDetails = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showBookDialog, setShowBookDialog] = useState(false);
 
+  // Check if this is a demo ride
+  useEffect(() => {
+    if (id?.startsWith('demo-')) {
+      toast({
+        title: "Trajet de démonstration",
+        description: "Ceci est un trajet de démonstration. Veuillez rechercher des trajets réels.",
+      });
+      navigate('/rides');
+      return;
+    }
+  }, [id, navigate, toast]);
+
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -33,6 +45,11 @@ const RideDetails = () => {
   const { data: ride, isLoading: rideLoading, error } = useQuery({
     queryKey: ["ride", id],
     queryFn: async () => {
+      // Don't make the API call for demo rides
+      if (id?.startsWith('demo-')) {
+        return null;
+      }
+
       const { data, error } = await supabase
         .from("rides")
         .select(`
@@ -45,6 +62,7 @@ const RideDetails = () => {
       if (error) throw error;
       return data;
     },
+    enabled: !id?.startsWith('demo-'), // Disable the query for demo rides
   });
 
   const handleBookClick = async () => {
