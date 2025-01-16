@@ -299,18 +299,37 @@ const RideDetails = () => {
     }
 
     try {
+      console.log("Creating checkout session with params:", { 
+        rideId: id,
+        price: ride?.price,
+        departure_city: ride?.departure_city,
+        arrival_city: ride?.arrival_city
+      });
+
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
           rideId: id,
           price: ride?.price,
           departure_city: ride?.departure_city,
-          arrival_city: ride?.arrival_city
+          arrival_city: ride?.arrival_city,
+          success_url: `${window.location.origin}/rides/${id}?success=true`,
+          cancel_url: `${window.location.origin}/rides/${id}?canceled=true`
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating checkout session:', error);
+        toast.error("Erreur lors de la création de la session de paiement");
+        return;
+      }
 
-      // Redirect to Stripe Checkout
+      if (!data?.url) {
+        console.error('No checkout URL returned:', data);
+        toast.error("Erreur lors de la création de la session de paiement");
+        return;
+      }
+
+      console.log("Redirecting to checkout URL:", data.url);
       window.location.href = data.url;
     } catch (error) {
       console.error('Error creating checkout session:', error);
