@@ -203,6 +203,17 @@ const RideDetails = () => {
     },
   });
 
+  useEffect(() => {
+    // Check for successful payment
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('success') === 'true') {
+      toast.success("Paiement réussi ! Votre trajet est réservé.");
+      bookRideMutation.mutate();
+    } else if (urlParams.get('canceled') === 'true') {
+      toast.error("Le paiement a été annulé.");
+    }
+  }, []);
+
   if (id === "create") {
     return (
       <div className="min-h-screen flex flex-col">
@@ -295,7 +306,7 @@ const RideDetails = () => {
           departure_city: ride?.departure_city,
           arrival_city: ride?.arrival_city
         }
-      })
+      });
 
       if (error) throw error;
 
@@ -306,17 +317,6 @@ const RideDetails = () => {
       toast.error("Erreur lors de la création de la session de paiement");
     }
   };
-
-  useEffect(() => {
-    // Check for successful payment
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('success') === 'true') {
-      toast.success("Paiement réussi ! Votre trajet est réservé.");
-      bookRideMutation.mutate();
-    } else if (urlParams.get('canceled') === 'true') {
-      toast.error("Le paiement a été annulé.");
-    }
-  }, []);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -481,7 +481,7 @@ const RideDetails = () => {
       <BookRideDialog
         isOpen={showBookingDialog}
         onClose={() => setShowBookingDialog(false)}
-        onConfirm={handleBookingConfirm}
+        onConfirm={handleBookClick}
         rideCost={ride.price}
       />
 
