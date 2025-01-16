@@ -4,7 +4,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Card } from "./ui/card";
-import { CreditCard, Paypal, Apple } from "lucide-react";
+import { CreditCard, DollarSign, Apple } from "lucide-react";
 
 interface PaymentFormProps {
   amount: number;
@@ -59,7 +59,7 @@ export const PaymentForm = ({ amount, onSuccess, onCancel, isLoading }: PaymentF
             paymentMethod === "paypal" ? "border-white" : "border-gray-700"
           }`}
         >
-          <Paypal className="h-6 w-6" />
+          <DollarSign className="h-6 w-6" />
           <span>PayPal</span>
         </button>
         <button
