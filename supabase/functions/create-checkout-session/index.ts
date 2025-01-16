@@ -10,7 +10,7 @@ serve(async (req) => {
   try {
     const { rideId, price, departure_city, arrival_city, success_url, cancel_url } = await req.json()
 
-    console.log("Creating checkout session with params:", {
+    console.log("Starting checkout session creation with params:", {
       rideId,
       price,
       departure_city,
@@ -21,14 +21,18 @@ serve(async (req) => {
 
     // Validate required fields
     if (!rideId || !departure_city || !arrival_city || !success_url || !cancel_url) {
+      console.error("Missing required fields:", { rideId, departure_city, arrival_city, success_url, cancel_url })
       throw new Error("Missing required fields")
     }
 
     // Ensure price is a valid number and convert to cents for Stripe
     const amount = Math.round(Number(price) * 100)
     if (isNaN(amount) || amount <= 0) {
+      console.error("Invalid price amount:", price)
       throw new Error("Invalid price amount")
     }
+
+    console.log("Creating Stripe session with amount:", amount)
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -60,7 +64,10 @@ serve(async (req) => {
       locale: "fr"
     })
 
-    console.log("Checkout session created:", session.id)
+    console.log("Checkout session created successfully:", {
+      sessionId: session.id,
+      url: session.url
+    })
 
     return new Response(
       JSON.stringify({ url: session.url }),
@@ -70,7 +77,7 @@ serve(async (req) => {
       }
     )
   } catch (error) {
-    console.error("Error:", error)
+    console.error("Error in create-checkout-session:", error)
     return new Response(
       JSON.stringify({ error: error.message }),
       {
