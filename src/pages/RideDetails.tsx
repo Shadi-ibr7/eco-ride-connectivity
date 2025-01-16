@@ -126,7 +126,6 @@ const RideDetails = () => {
   const [showBookingDialog, setShowBookingDialog] = useState(false);
   const [userCredits, setUserCredits] = useState<number | null>(null);
 
-  // Add the booking mutation with demo handling
   const bookRideMutation = useMutation({
     mutationFn: async () => {
       if (!id || !session?.user) throw new Error("Missing ride ID or user");
@@ -174,7 +173,39 @@ const RideDetails = () => {
     },
   });
 
-  // If we're on the create route, show the create form
+  // Check if this is a demo ride
+  const isDemoRide = id?.startsWith('demo-');
+  const demoRide = isDemoRide ? demoRides.find(ride => ride.id === id) : null;
+
+  // Modified session query to handle demo rides
+  const { data: session } = useQuery({
+    queryKey: ["session"],
+    queryFn: async () => {
+      // For demo rides, return a mock session
+      if (isDemoRide) {
+        return {
+          user: {
+            id: 'demo-user',
+          }
+        };
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("credits")
+          .eq("id", session.user.id)
+          .single();
+        
+        if (profile) {
+          setUserCredits(profile.credits);
+        }
+      }
+      return session;
+    },
+  });
+
   if (id === "create") {
     return (
       <div className="min-h-screen flex flex-col">
@@ -192,11 +223,9 @@ const RideDetails = () => {
     );
   }
 
-  // Check if this is a demo ride
   const isDemoRide = id?.startsWith('demo-');
   const demoRide = isDemoRide ? demoRides.find(ride => ride.id === id) : null;
 
-  // Fetch ride details and driver reviews only for non-demo rides
   const { data: ride, isLoading: isLoadingRide } = useQuery({
     queryKey: ["ride", id],
     queryFn: async () => {
@@ -235,25 +264,6 @@ const RideDetails = () => {
       } as RideDetails;
     },
     enabled: !!id,
-  });
-
-  const { data: session } = useQuery({
-    queryKey: ["session"],
-    queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("credits")
-          .eq("id", session.user.id)
-          .single();
-        
-        if (profile) {
-          setUserCredits(profile.credits);
-        }
-      }
-      return session;
-    },
   });
 
   if (isLoadingRide && !isDemoRide) {
