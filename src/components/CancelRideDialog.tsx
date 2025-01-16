@@ -42,7 +42,7 @@ export function CancelRideDialog({
         .from("rides")
         .select(`
           *,
-          profile:profiles(name, email)
+          profile:profiles(name, id)
         `)
         .eq("id", rideId)
         .single();
