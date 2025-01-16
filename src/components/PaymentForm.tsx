@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -23,9 +23,7 @@ export const PaymentForm = ({
 }: PaymentFormProps) => {
   const [processing, setProcessing] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleSubmit = async () => {
     try {
       setProcessing(true);
       
@@ -61,9 +59,9 @@ export const PaymentForm = ({
     }
   };
 
-  // Auto-submit the form when component mounts
-  useState(() => {
-    handleSubmit(new Event('submit') as React.FormEvent);
+  // Auto-submit when component mounts
+  useEffect(() => {
+    handleSubmit();
   }, []);
 
   return null; // No UI needed since we redirect immediately
