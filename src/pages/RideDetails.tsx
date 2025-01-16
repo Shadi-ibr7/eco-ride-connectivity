@@ -8,11 +8,12 @@ import { Footer } from "@/components/Footer";
 import { RideActions } from "@/components/RideActions";
 import { RideStatusActions } from "@/components/RideStatusActions";
 import { RideReviewForm } from "@/components/RideReviewForm";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Car, Calendar, Clock, MapPin, Users, Leaf, Euro } from "lucide-react";
 import { useEffect, useState } from "react";
+import { BookRideDialog } from "@/components/BookRideDialog";
 
 const RideDetails = () => {
   const { id } = useParams();
@@ -20,6 +21,7 @@ const RideDetails = () => {
   const { toast } = useToast();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showBookDialog, setShowBookDialog] = useState(false);
 
   useEffect(() => {
     const getUser = async () => {
@@ -56,6 +58,10 @@ const RideDetails = () => {
       return;
     }
 
+    setShowBookDialog(true);
+  };
+
+  const handleBookConfirm = async () => {
     try {
       setIsLoading(true);
       const baseUrl = window.location.origin.replace(/\/$/, '');
@@ -111,10 +117,9 @@ const RideDetails = () => {
       });
     } finally {
       setIsLoading(false);
+      setShowBookDialog(false);
     }
   };
-
-  // ... keep existing code (JSX for the ride details layout)
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -211,6 +216,13 @@ const RideDetails = () => {
           </Card>
         )}
       </main>
+
+      <BookRideDialog
+        isOpen={showBookDialog}
+        onClose={() => setShowBookDialog(false)}
+        onConfirm={handleBookConfirm}
+        rideCost={ride?.price || 0}
+      />
 
       <Footer />
     </div>
