@@ -132,8 +132,6 @@ const RideDetails = () => {
     }
   };
 
-  // ... keep existing code (render method with the Card component)
-
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -196,7 +194,7 @@ const RideDetails = () => {
                   )}
                   <div className="flex items-center gap-2">
                     <Euro className="h-5 w-5 text-gray-500" />
-                    <span>{ride.price} crédits</span>
+                    <span>{ride.price}€</span>
                   </div>
                 </div>
               </div>
