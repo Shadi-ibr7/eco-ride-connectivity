@@ -9,7 +9,6 @@ import { RideActions } from "@/components/RideActions";
 import { RideStatusActions } from "@/components/RideStatusActions";
 import { RideReviewForm } from "@/components/RideReviewForm";
 import { useToast } from "@/components/ui/use-toast";
-import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Car, Calendar, Clock, MapPin, Users, Leaf, Euro } from "lucide-react";
@@ -20,6 +19,7 @@ const RideDetails = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const getUser = async () => {
@@ -29,7 +29,7 @@ const RideDetails = () => {
     getUser();
   }, []);
 
-  const { data: ride, isLoading, error } = useQuery({
+  const { data: ride, isLoading: rideLoading, error } = useQuery({
     queryKey: ["ride", id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -57,6 +57,7 @@ const RideDetails = () => {
     }
 
     try {
+      setIsLoading(true);
       const baseUrl = window.location.origin.replace(/\/$/, '');
       
       console.log("Creating checkout session with params:", { 
@@ -108,15 +109,19 @@ const RideDetails = () => {
         description: "Une erreur est survenue lors de la réservation",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  // ... keep existing code (JSX for the ride details layout)
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
       <main className="flex-grow container mx-auto px-4 py-8">
-        {isLoading ? (
+        {rideLoading || isLoading ? (
           <div className="text-center">
             <p>Chargement du trajet...</p>
           </div>
