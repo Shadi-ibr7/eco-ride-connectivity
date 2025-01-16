@@ -2,13 +2,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { PaymentForm } from "./PaymentForm";
-import { AlertTriangle } from "lucide-react";
 
 const stripeKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
-if (!stripeKey) {
-  console.error("Missing Stripe public key. Please check your environment variables.");
-}
-
 const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
 interface BookRideDialogProps {
@@ -32,26 +27,6 @@ export const BookRideDialog = ({
   departure_city,
   arrival_city,
 }: BookRideDialogProps) => {
-  if (!stripePromise) {
-    return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-semibold flex items-center gap-3 text-ecogreen">
-              <AlertTriangle className="h-8 w-8 text-yellow-500" />
-              Configuration requise
-            </DialogTitle>
-            <DialogDescription className="text-lg mt-4 text-gray-600">
-              La configuration de paiement n'est pas complète.
-              <br />
-              Veuillez contacter l'administrateur du site.
-            </DialogDescription>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
