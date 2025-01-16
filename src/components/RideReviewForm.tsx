@@ -32,17 +32,47 @@ export const RideReviewForm = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
-      const { error } = await supabase.from("driver_reviews").insert({
-        driver_id: driverId,
-        reviewer_id: user.id,
-        rating,
-        comment,
-        is_positive: isPositive,
-      });
+      // First check if a review already exists
+      const { data: existingReview } = await supabase
+        .from("driver_reviews")
+        .select("id")
+        .eq("reviewer_id", user.id)
+        .eq("driver_id", driverId)
+        .single();
+
+      let error;
+      
+      if (existingReview) {
+        // Update existing review
+        const { error: updateError } = await supabase
+          .from("driver_reviews")
+          .update({
+            rating,
+            comment,
+            is_positive: isPositive,
+          })
+          .eq("id", existingReview.id);
+        error = updateError;
+      } else {
+        // Create new review
+        const { error: insertError } = await supabase
+          .from("driver_reviews")
+          .insert({
+            driver_id: driverId,
+            reviewer_id: user.id,
+            rating,
+            comment,
+            is_positive: isPositive,
+          });
+        error = insertError;
+      }
 
       if (error) throw error;
 
-      toast.success("Votre avis a été soumis avec succès");
+      toast.success(existingReview 
+        ? "Votre avis a été mis à jour avec succès"
+        : "Votre avis a été soumis avec succès"
+      );
       onSubmit?.();
     } catch (error) {
       console.error("Error submitting review:", error);
