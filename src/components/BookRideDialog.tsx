@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { PaymentForm } from "./PaymentForm";
+import { AlertTriangle } from "lucide-react";
 
 const stripeKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
 if (!stripeKey) {
@@ -28,13 +29,18 @@ export const BookRideDialog = ({
   if (!stripePromise) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-ecogreen-DEFAULT text-white">
           <DialogHeader>
-            <DialogTitle>Error</DialogTitle>
+            <DialogTitle className="text-xl font-semibold flex items-center gap-2">
+              <AlertTriangle className="h-6 w-6" />
+              Configuration Error
+            </DialogTitle>
           </DialogHeader>
-          <p className="text-red-500">
-            Payment system is not properly configured. Please try again later.
-          </p>
+          <div className="p-4 rounded-lg bg-ecogreen-light/10">
+            <p className="text-white/90">
+              The payment system is not properly configured. Please contact support or try again later.
+            </p>
+          </div>
         </DialogContent>
       </Dialog>
     );
