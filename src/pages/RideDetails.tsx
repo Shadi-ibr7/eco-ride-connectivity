@@ -64,7 +64,7 @@ const RideDetails = () => {
   const handleBookConfirm = async () => {
     try {
       setIsLoading(true);
-      const baseUrl = window.location.origin.replace(/\/$/, '');
+      const baseUrl = window.location.origin;
       
       console.log("Creating checkout session with params:", { 
         rideId: id,
@@ -93,6 +93,7 @@ const RideDetails = () => {
           description: "Erreur lors de la création de la session de paiement",
           variant: "destructive",
         });
+        setIsLoading(false);
         return;
       }
 
@@ -103,6 +104,7 @@ const RideDetails = () => {
           description: "Erreur lors de la création de la session de paiement",
           variant: "destructive",
         });
+        setIsLoading(false);
         return;
       }
 
@@ -115,9 +117,7 @@ const RideDetails = () => {
         description: "Une erreur est survenue lors de la réservation",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
-      setShowBookDialog(false);
     }
   };
 
@@ -219,9 +219,13 @@ const RideDetails = () => {
 
       <BookRideDialog
         isOpen={showBookDialog}
-        onClose={() => setShowBookDialog(false)}
+        onClose={() => {
+          setShowBookDialog(false);
+          setIsLoading(false);
+        }}
         onConfirm={handleBookConfirm}
         rideCost={ride?.price || 0}
+        isLoading={isLoading}
       />
 
       <Footer />
