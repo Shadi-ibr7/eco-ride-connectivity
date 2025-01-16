@@ -1,7 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -65,14 +64,16 @@ const RideDetails = () => {
     try {
       setIsLoading(true);
       const baseUrl = window.location.origin;
+      const successUrl = `${baseUrl}/rides/${id}?success=true`;
+      const cancelUrl = `${baseUrl}/rides/${id}?canceled=true`;
       
       console.log("Creating checkout session with params:", { 
         rideId: id,
         price: ride?.price,
         departure_city: ride?.departure_city,
         arrival_city: ride?.arrival_city,
-        success_url: `${baseUrl}/rides/${id}?success=true`,
-        cancel_url: `${baseUrl}/rides/${id}?canceled=true`
+        success_url: successUrl,
+        cancel_url: cancelUrl
       });
 
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
@@ -81,8 +82,8 @@ const RideDetails = () => {
           price: ride?.price,
           departure_city: ride?.departure_city,
           arrival_city: ride?.arrival_city,
-          success_url: `${baseUrl}/rides/${id}?success=true`,
-          cancel_url: `${baseUrl}/rides/${id}?canceled=true`
+          success_url: successUrl,
+          cancel_url: cancelUrl
         }
       });
 
@@ -121,12 +122,14 @@ const RideDetails = () => {
     }
   };
 
+  // ... keep existing code (render method with the Card component)
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
       <main className="flex-grow container mx-auto px-4 py-8">
-        {rideLoading || isLoading ? (
+        {rideLoading ? (
           <div className="text-center">
             <p>Chargement du trajet...</p>
           </div>
