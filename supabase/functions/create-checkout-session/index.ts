@@ -17,6 +17,12 @@ serve(async (req) => {
       arrival_city
     })
 
+    // Ensure price is a valid number and convert to cents
+    const amount = Math.round(Number(price) * 100)
+    if (isNaN(amount) || amount <= 0) {
+      throw new Error("Invalid price amount")
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [
@@ -24,11 +30,13 @@ serve(async (req) => {
           price_data: {
             currency: "eur",
             product_data: {
-              name: `Trajet ${departure_city} → ${arrival_city}`,
-              description: `Réservation du trajet de ${departure_city} à ${arrival_city}`,
-              images: ["https://images.unsplash.com/photo-1469854523086-cc02fe5d8800"],
+              name: `Trajet de ${departure_city} à ${arrival_city}`,
+              description: `Réservation de votre trajet en covoiturage`,
+              images: [
+                "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800"
+              ],
             },
-            unit_amount: Math.round(price * 100), // Stripe expects amount in cents
+            unit_amount: amount,
           },
           quantity: 1,
         },

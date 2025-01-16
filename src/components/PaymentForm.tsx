@@ -27,10 +27,24 @@ export const PaymentForm = ({
     try {
       setProcessing(true);
       
+      // Ensure amount is a valid number
+      const price = Number(amount);
+      if (isNaN(price) || price <= 0) {
+        toast.error("Montant invalide");
+        return;
+      }
+
+      console.log("Sending payment request with data:", {
+        rideId,
+        price,
+        departure_city,
+        arrival_city
+      });
+
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
           rideId,
-          price: amount,
+          price,
           departure_city,
           arrival_city
         }
