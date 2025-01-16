@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 interface PaymentFormProps {
   amount: number;
@@ -97,5 +98,18 @@ export const PaymentForm = ({
     handleSubmit();
   }, []);
 
-  return null; // No UI needed since we redirect immediately
+  return (
+    <div className="flex flex-col items-center justify-center p-4 space-y-4">
+      <div className="flex items-center space-x-2">
+        <Loader2 className="h-6 w-6 animate-spin" />
+        <p className="text-lg">Redirection vers la page de paiement...</p>
+      </div>
+      <p className="text-sm text-gray-500">
+        Vous allez être redirigé vers la page de paiement sécurisée Stripe
+      </p>
+      <p className="text-sm text-gray-500">
+        Montant à payer : {amount}€
+      </p>
+    </div>
+  );
 };
