@@ -8,21 +8,23 @@ serve(async (req) => {
   }
 
   try {
-    const { rideId, price, departure_city, arrival_city } = await req.json()
+    const { rideId, price, departure_city, arrival_city, success_url, cancel_url } = await req.json()
 
     console.log("Creating checkout session with params:", {
       rideId,
       price,
       departure_city,
-      arrival_city
+      arrival_city,
+      success_url,
+      cancel_url
     })
 
     // Validate required fields
-    if (!rideId || !departure_city || !arrival_city) {
+    if (!rideId || !departure_city || !arrival_city || !success_url || !cancel_url) {
       throw new Error("Missing required fields")
     }
 
-    // Ensure price is a valid number and convert to cents
+    // Ensure price is a valid number and convert to cents for Stripe
     const amount = Math.round(Number(price) * 100)
     if (isNaN(amount) || amount <= 0) {
       throw new Error("Invalid price amount")
@@ -37,9 +39,6 @@ serve(async (req) => {
             product_data: {
               name: `Trajet de ${departure_city} à ${arrival_city}`,
               description: `Réservation de votre trajet en covoiturage`,
-              images: [
-                "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800"
-              ],
             },
             unit_amount: amount,
           },
@@ -47,8 +46,8 @@ serve(async (req) => {
         },
       ],
       mode: "payment",
-      success_url: `${req.headers.get("origin")}/rides/${rideId}?success=true`,
-      cancel_url: `${req.headers.get("origin")}/rides/${rideId}?canceled=true`,
+      success_url: success_url,
+      cancel_url: cancel_url,
       metadata: {
         rideId,
         departure_city,

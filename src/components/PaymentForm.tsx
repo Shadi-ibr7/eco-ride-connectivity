@@ -26,26 +26,46 @@ export const PaymentForm = ({
   const handleSubmit = async () => {
     try {
       setProcessing(true);
+      console.log("Starting payment process with params:", {
+        rideId,
+        amount,
+        departure_city,
+        arrival_city
+      });
 
       // Ensure amount is a valid number
       const price = Number(amount);
       if (isNaN(price) || price <= 0) {
+        console.error("Invalid price amount:", amount);
         toast.error("Le montant du trajet est invalide");
         return;
       }
 
       // Validate required fields
       if (!rideId || !departure_city || !arrival_city) {
+        console.error("Missing required fields:", { rideId, departure_city, arrival_city });
         toast.error("Informations du trajet manquantes");
         return;
       }
+
+      // Get the base URL without trailing slash
+      const baseUrl = window.location.origin.replace(/\/$/, '');
+      const successUrl = `${baseUrl}/rides/${rideId}?success=true`;
+      const cancelUrl = `${baseUrl}/rides/${rideId}?canceled=true`;
+
+      console.log("Creating checkout session with URLs:", {
+        successUrl,
+        cancelUrl
+      });
 
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: { 
           rideId,
           price,
           departure_city,
-          arrival_city
+          arrival_city,
+          success_url: successUrl,
+          cancel_url: cancelUrl
         }
       });
 
@@ -61,7 +81,7 @@ export const PaymentForm = ({
         return;
       }
 
-      // Redirect to Stripe Checkout
+      console.log("Redirecting to Stripe checkout URL:", data.url);
       window.location.href = data.url;
       
     } catch (error) {
