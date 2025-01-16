@@ -1,22 +1,21 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 
 interface CancellationRequest {
   rideId: string;
 }
 
-const handler = async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") {
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
@@ -28,14 +27,17 @@ const handler = async (req: Request): Promise<Response> => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const { rideId }: CancellationRequest = await req.json();
 
-    console.log("Processing cancellation for ride:", rideId);
+    if (!rideId) {
+      throw new Error("No ride ID provided");
+    }
 
-    // Get ride details with passenger information through bookings
+    console.log("Fetching ride details for:", rideId);
+
+    // Get ride details with bookings and passenger profiles
     const { data: ride, error: rideError } = await supabase
-      .from("rides")
+      .from('rides')
       .select(`
         *,
-        profile:profiles!rides_user_id_fkey(name),
         bookings:ride_bookings(
           passenger:profiles(
             id,
@@ -43,19 +45,15 @@ const handler = async (req: Request): Promise<Response> => {
           )
         )
       `)
-      .eq("id", rideId)
+      .eq('id', rideId)
       .single();
 
-    if (rideError) {
+    if (rideError || !ride) {
       console.error("Error fetching ride:", rideError);
-      throw rideError;
+      throw rideError || new Error("Ride not found");
     }
 
-    if (!ride) {
-      throw new Error("Ride not found");
-    }
-
-    console.log("Found ride with bookings:", ride);
+    console.log("Found ride:", ride);
 
     // For each booking, get the passenger's email from auth.users
     const emailPromises = ride.bookings.map(async (booking: any) => {
@@ -123,17 +121,19 @@ const handler = async (req: Request): Promise<Response> => {
 
     await Promise.all(emailPromises);
 
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
-  } catch (error: any) {
-    console.error("Error in notify-ride-cancellation function:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
-  }
-};
+    return new Response(
+      JSON.stringify({ message: "Cancellation notifications sent successfully" }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
 
-serve(handler);
+  } catch (error) {
+    console.error("Error in notify-ride-cancellation:", error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500 
+      }
+    );
+  }
+});
