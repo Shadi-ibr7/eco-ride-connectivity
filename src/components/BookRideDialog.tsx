@@ -2,8 +2,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { PaymentForm } from "./PaymentForm";
+import { AlertTriangle } from "lucide-react";
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || '');
+const stripeKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
+if (!stripeKey) {
+  console.error("Missing Stripe public key. Please check your environment variables.");
+}
+
+const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
 interface BookRideDialogProps {
   isOpen: boolean;
@@ -26,6 +32,27 @@ export const BookRideDialog = ({
   departure_city,
   arrival_city,
 }: BookRideDialogProps) => {
+  if (!stripePromise) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-md bg-ecogreen-DEFAULT text-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold flex items-center gap-2">
+              <AlertTriangle className="h-6 w-6" />
+              Configuration requise
+            </DialogTitle>
+          </DialogHeader>
+          <div className="p-4 rounded-lg bg-ecogreen-light/10">
+            <p className="text-white/90">
+              Veuillez configurer votre clé publique Stripe dans les variables d'environnement (.env) :
+              VITE_STRIPE_PUBLIC_KEY=votre_clé_publique_stripe
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
