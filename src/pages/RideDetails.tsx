@@ -223,9 +223,6 @@ const RideDetails = () => {
     );
   }
 
-  const isDemoRide = id?.startsWith('demo-');
-  const demoRide = isDemoRide ? demoRides.find(ride => ride.id === id) : null;
-
   const { data: ride, isLoading: isLoadingRide } = useQuery({
     queryKey: ["ride", id],
     queryFn: async () => {
