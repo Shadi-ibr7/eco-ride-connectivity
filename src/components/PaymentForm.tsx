@@ -39,15 +39,17 @@ export const PaymentForm = ({ amount, onSuccess, onCancel, isLoading }: PaymentF
   };
 
   return (
-    <Card className="p-6 max-w-md mx-auto bg-black text-white">
+    <Card className="p-6 max-w-md mx-auto bg-ecogreen-DEFAULT text-white">
       <h2 className="text-2xl font-bold mb-2">Payment Method</h2>
-      <p className="text-gray-400 mb-6">Add a new payment method to your account.</p>
+      <p className="text-gray-300 mb-6">Add a new payment method to your account.</p>
 
       <div className="grid grid-cols-3 gap-4 mb-6">
         <button
           onClick={() => setPaymentMethod("card")}
-          className={`p-4 border rounded-lg flex flex-col items-center justify-center gap-2 ${
-            paymentMethod === "card" ? "border-white" : "border-gray-700"
+          className={`p-4 border rounded-lg flex flex-col items-center justify-center gap-2 transition-colors ${
+            paymentMethod === "card" 
+              ? "border-white bg-ecogreen-light text-white" 
+              : "border-gray-600 hover:border-gray-400"
           }`}
         >
           <CreditCard className="h-6 w-6" />
@@ -55,8 +57,10 @@ export const PaymentForm = ({ amount, onSuccess, onCancel, isLoading }: PaymentF
         </button>
         <button
           onClick={() => setPaymentMethod("paypal")}
-          className={`p-4 border rounded-lg flex flex-col items-center justify-center gap-2 ${
-            paymentMethod === "paypal" ? "border-white" : "border-gray-700"
+          className={`p-4 border rounded-lg flex flex-col items-center justify-center gap-2 transition-colors ${
+            paymentMethod === "paypal" 
+              ? "border-white bg-ecogreen-light text-white" 
+              : "border-gray-600 hover:border-gray-400"
           }`}
         >
           <DollarSign className="h-6 w-6" />
@@ -64,8 +68,10 @@ export const PaymentForm = ({ amount, onSuccess, onCancel, isLoading }: PaymentF
         </button>
         <button
           onClick={() => setPaymentMethod("apple")}
-          className={`p-4 border rounded-lg flex flex-col items-center justify-center gap-2 ${
-            paymentMethod === "apple" ? "border-white" : "border-gray-700"
+          className={`p-4 border rounded-lg flex flex-col items-center justify-center gap-2 transition-colors ${
+            paymentMethod === "apple" 
+              ? "border-white bg-ecogreen-light text-white" 
+              : "border-gray-600 hover:border-gray-400"
           }`}
         >
           <Apple className="h-6 w-6" />
@@ -75,31 +81,31 @@ export const PaymentForm = ({ amount, onSuccess, onCancel, isLoading }: PaymentF
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="name">Name</Label>
+          <Label htmlFor="name" className="text-white">Name</Label>
           <Input
             id="name"
             type="text"
             placeholder="First Last"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="bg-black border-gray-700 text-white"
+            className="bg-ecogreen-DEFAULT border-gray-600 text-white placeholder:text-gray-400 focus:border-white"
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="city">City</Label>
+          <Label htmlFor="city" className="text-white">City</Label>
           <Input
             id="city"
             type="text"
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            className="bg-black border-gray-700 text-white"
+            className="bg-ecogreen-DEFAULT border-gray-600 text-white placeholder:text-gray-400 focus:border-white"
           />
         </div>
 
         <div className="space-y-2">
-          <Label>Card Details</Label>
-          <div className="p-3 border border-gray-700 rounded-md">
+          <Label className="text-white">Card Details</Label>
+          <div className="p-3 border border-gray-600 rounded-md">
             <CardElement
               options={{
                 style: {
@@ -107,11 +113,11 @@ export const PaymentForm = ({ amount, onSuccess, onCancel, isLoading }: PaymentF
                     fontSize: '16px',
                     color: '#ffffff',
                     '::placeholder': {
-                      color: '#aab7c4',
+                      color: '#9CA3AF',
                     },
                   },
                   invalid: {
-                    color: '#fa755a',
+                    color: '#EF4444',
                   },
                 },
               }}
@@ -122,7 +128,7 @@ export const PaymentForm = ({ amount, onSuccess, onCancel, isLoading }: PaymentF
         <Button
           type="submit"
           disabled={!stripe || isLoading}
-          className="w-full bg-white text-black hover:bg-gray-100"
+          className="w-full bg-white text-ecogreen-DEFAULT hover:bg-gray-100"
         >
           {isLoading ? "Processing..." : "Continue"}
         </Button>
