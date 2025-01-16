@@ -1,47 +1,40 @@
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+import { PaymentForm } from "./PaymentForm";
+
+const stripePromise = loadStripe(process.env.STRIPE_PUBLIC_KEY!);
 
 interface BookRideDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void>;
   rideCost: number;
   isLoading?: boolean;
 }
 
-export const BookRideDialog = ({ isOpen, onClose, onConfirm, rideCost, isLoading }: BookRideDialogProps) => {
+export const BookRideDialog = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  rideCost,
+  isLoading,
+}: BookRideDialogProps) => {
   return (
-    <AlertDialog open={isOpen} onOpenChange={onClose}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Confirmer la réservation</AlertDialogTitle>
-          <AlertDialogDescription>
-            Êtes-vous sûr de vouloir réserver ce trajet ? Cette action utilisera {rideCost} crédit{rideCost > 1 ? 's' : ''}.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={onClose} disabled={isLoading}>Annuler</AlertDialogCancel>
-          <AlertDialogAction 
-            onClick={onConfirm} 
-            disabled={isLoading}
-            className="relative"
-          >
-            {isLoading && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin absolute left-2" />
-            )}
-            Confirmer
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Book this ride</DialogTitle>
+        </DialogHeader>
+        <Elements stripe={stripePromise}>
+          <PaymentForm
+            amount={rideCost}
+            onSuccess={onConfirm}
+            onCancel={onClose}
+            isLoading={isLoading}
+          />
+        </Elements>
+      </DialogContent>
+    </Dialog>
   );
 };
