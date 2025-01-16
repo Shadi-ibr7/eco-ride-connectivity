@@ -34,7 +34,10 @@ const RideDetails = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("rides")
-        .select("*")
+        .select(`
+          *,
+          profile:profiles(name, id)
+        `)
         .eq("id", id)
         .single();
 
@@ -126,26 +129,80 @@ const RideDetails = () => {
             <p>Trajet non trouvé</p>
           </div>
         ) : (
-          <Card>
-            <h2 className="text-2xl font-bold">{ride.departure_city} à {ride.arrival_city}</h2>
-            <p>{format(new Date(ride.departure_date), "PPPP", { locale: fr })}</p>
-            <p>{ride.price} €</p>
-            <Button onClick={handleBookClick}>Réserver</Button>
-            <RideActions 
-              rideId={ride.id} 
-              isDriver={currentUser?.id === ride.user_id}
-              canBook={currentUser?.id !== ride.user_id}
-              onBookClick={handleBookClick}
-            />
-            <RideStatusActions 
-              rideId={ride.id}
-              status={ride.status}
-              isDriver={currentUser?.id === ride.user_id}
-            />
-            <RideReviewForm 
-              rideId={ride.id}
-              driverId={ride.user_id}
-            />
+          <Card className="p-6">
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold mb-2">
+                  {ride.departure_city} → {ride.arrival_city}
+                </h2>
+                <p className="text-gray-600">
+                  {format(new Date(ride.departure_date), "PPPP", { locale: fr })}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-gray-500" />
+                    <span>{format(new Date(ride.departure_date), "PPPP", { locale: fr })}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-gray-500" />
+                    <span>Départ à {ride.departure_time}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-5 w-5 text-gray-500" />
+                    <span>{ride.departure_city} → {ride.arrival_city}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-gray-500" />
+                    <span>{ride.seats_available} places disponibles</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Car className="h-5 w-5 text-gray-500" />
+                    <span>{ride.vehicle_brand} {ride.vehicle_model}</span>
+                  </div>
+                  {ride.is_electric_car && (
+                    <div className="flex items-center gap-2">
+                      <Leaf className="h-5 w-5 text-green-500" />
+                      <span>Véhicule électrique</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Euro className="h-5 w-5 text-gray-500" />
+                    <span>{ride.price} crédits</span>
+                  </div>
+                </div>
+              </div>
+
+              {ride.description && (
+                <div>
+                  <h3 className="font-semibold mb-2">Description</h3>
+                  <p className="text-gray-600">{ride.description}</p>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <RideActions 
+                  rideId={ride.id}
+                  isDriver={currentUser?.id === ride.user_id}
+                  canBook={currentUser?.id !== ride.user_id}
+                  onBookClick={handleBookClick}
+                />
+                <RideStatusActions 
+                  rideId={ride.id}
+                  status={ride.status}
+                  isDriver={currentUser?.id === ride.user_id}
+                />
+                <RideReviewForm 
+                  rideId={ride.id}
+                  driverId={ride.user_id}
+                />
+              </div>
+            </div>
           </Card>
         )}
       </main>
