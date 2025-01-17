@@ -8,15 +8,15 @@ const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
 
   return (
-    <div className="min-h-screen flex flex-col bg-grass-50">
+    <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       <div className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-grass-900">
+            <h2 className="text-3xl font-bold text-foreground">
               {isLogin ? "Connexion" : "Inscription"}
             </h2>
-            <p className="mt-2 text-grass-700">
+            <p className="mt-2 text-muted-foreground">
               {isLogin
                 ? "Connectez-vous pour accéder à votre compte"
                 : "Créez votre compte pour commencer"}
@@ -31,7 +31,7 @@ const Auth = () => {
             <Button
               variant="link"
               onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-grass-600 hover:text-grass-700"
+              className="text-sm text-primary hover:text-primary/90"
             >
               {isLogin
                 ? "Pas encore de compte ? S'inscrire"

@@ -42,6 +42,7 @@ export const LoginForm = () => {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          className="bg-background border-input"
         />
       </div>
       <div>
@@ -51,6 +52,7 @@ export const LoginForm = () => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          className="bg-background border-input"
         />
       </div>
       <Button type="submit" className="w-full" disabled={isLoading}>
