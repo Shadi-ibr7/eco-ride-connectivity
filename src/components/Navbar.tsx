@@ -22,8 +22,8 @@ export const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <Link to="/" className="flex items-center">
-            <Car className="h-8 w-8 text-ecogreen" />
-            <span className="ml-2 text-xl font-bold text-ecogreen">EcoRide</span>
+            <Car className="h-8 w-8 text-grass-600" />
+            <span className="ml-2 text-xl font-bold text-grass-600">EcoRide</span>
           </Link>
           
           {/* Desktop menu */}
@@ -41,7 +41,7 @@ export const Navbar = () => {
               Contact
             </Button>
             <Button 
-              className="bg-ecogreen hover:bg-ecogreen-light flex items-center gap-2"
+              className="bg-grass-600 hover:bg-grass-700 text-white flex items-center gap-2"
               onClick={handleAuthClick}
             >
               <Users className="h-5 w-5" />
@@ -104,7 +104,7 @@ export const Navbar = () => {
               Contact
             </Button>
             <Button 
-              className="w-full bg-ecogreen hover:bg-ecogreen-light flex items-center gap-2"
+              className="w-full bg-grass-600 hover:bg-grass-700 text-white flex items-center gap-2"
               onClick={() => {
                 handleAuthClick();
                 setIsMenuOpen(false);
