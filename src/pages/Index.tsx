@@ -1,209 +1,77 @@
-import { useState } from "react";
-import { Navbar } from "@/components/Navbar";
+import { Button } from "@/components/ui/button";
 import { SearchForm } from "@/components/SearchForm";
 import { SearchResults } from "@/components/SearchResults";
 import { HowItWorks } from "@/components/HowItWorks";
 import { Footer } from "@/components/Footer";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Car, Leaf, Users } from "lucide-react";
+import { Navbar } from "@/components/Navbar";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
-  const [searchParams, setSearchParams] = useState<{
-    departure: string;
-    destination: string;
-    date: string;
-  } | null>(null);
+  const [searchResults, setSearchResults] = useState(null);
+  const navigate = useNavigate();
 
-  const { data: rides = [], isLoading } = useQuery({
-    queryKey: ["rides", searchParams],
-    queryFn: async () => {
-      if (!searchParams) return [];
-
-      console.log("Fetching upcoming rides...");
-      
-      let query = supabase
-        .from("rides")
-        .select(`
-          id,
-          departure_city,
-          arrival_city,
-          departure_date,
-          arrival_time,
-          price,
-          seats_available,
-          is_electric_car,
-          profile:profiles(name)
-        `)
-        .gt("seats_available", 0);
-
-      if (searchParams.departure) {
-        query = query.eq("departure_city", searchParams.departure);
-      }
-      if (searchParams.destination) {
-        query = query.eq("arrival_city", searchParams.destination);
-      }
-      if (searchParams.date) {
-        const startDate = new Date(searchParams.date);
-        startDate.setHours(0, 0, 0, 0);
-        const endDate = new Date(searchParams.date);
-        endDate.setHours(23, 59, 59, 999);
-        
-        query = query.gte("departure_date", startDate.toISOString())
-                    .lt("departure_date", endDate.toISOString());
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error("Error fetching rides:", error);
-        throw error;
-      }
-
-      console.log("Total rides in database:", data?.length || 0);
-      console.log("Fetched rides:", data);
-
-      return data || [];
-    },
-    enabled: !!searchParams,
-  });
-
-  const { data: nextAvailableRide } = useQuery({
-    queryKey: ["next-available-ride", searchParams?.departure, searchParams?.destination],
-    queryFn: async () => {
-      if (!searchParams) return null;
-
-      const { data, error } = await supabase
-        .from("rides")
-        .select("departure_date")
-        .eq("departure_city", searchParams.departure)
-        .eq("arrival_city", searchParams.destination)
-        .gt("seats_available", 0)
-        .gt("departure_date", new Date().toISOString())
-        .order("departure_date", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-
-      if (error) return null;
-      return data;
-    },
-    enabled: !!searchParams && rides.length === 0,
-  });
-
-  const handleSearch = (departure: string, destination: string, date: string) => {
-    console.log("Search params:", { departure, destination, date });
-    setSearchParams({ departure, destination, date });
-  };
-
-  const handleDateChange = (newDate: Date) => {
-    if (searchParams) {
-      setSearchParams({
-        ...searchParams,
-        date: newDate.toISOString().split('T')[0],
+  const handleSearch = async (searchParams: any) => {
+    try {
+      const baseUrl = window.location.origin;
+      const response = await fetch(`${baseUrl}/api/search`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(searchParams),
       });
+
+      if (!response.ok) {
+        throw new Error('Search failed');
+      }
+
+      const data = await response.json();
+      setSearchResults(data);
+    } catch (error) {
+      console.error('Search error:', error);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
-      
-      {/* Hero Section with Search */}
-      <section className="relative bg-gradient-to-br from-ecogreen to-ecogreen-light py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center text-white mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              Voyagez écologique avec EcoRide
-            </h1>
-            <p className="text-xl md:text-2xl">
-              Trouvez des covoiturages écologiques et économiques
-            </p>
+      <main>
+        <div className="relative isolate">
+          <div className="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8 lg:py-40">
+            <div className="mx-auto max-w-2xl text-center">
+              <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+                Covoiturage écologique et économique
+              </h1>
+              <p className="mt-6 text-lg leading-8 text-gray-600">
+                Trouvez des trajets partagés respectueux de l'environnement.
+                Voyagez de manière responsable tout en économisant.
+              </p>
+              <div className="mt-10 flex items-center justify-center gap-x-6">
+                <Button
+                  onClick={() => navigate("/rides")}
+                  className="bg-ecogreen hover:bg-ecogreen-dark"
+                >
+                  Voir les trajets disponibles
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/how-it-works")}
+                >
+                  Comment ça marche ?
+                </Button>
+              </div>
+            </div>
           </div>
-          
+        </div>
+
+        <div className="mx-auto max-w-7xl px-6 lg:px-8 mb-12">
           <SearchForm onSearch={handleSearch} />
+          {searchResults && <SearchResults results={searchResults} />}
         </div>
-      </section>
 
-      {/* Company Presentation */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900">
-              Bienvenue chez EcoRide
-            </h2>
-            <p className="mt-4 text-lg text-gray-600">
-              Votre partenaire de confiance pour des trajets écologiques et économiques
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            <div className="text-center p-6">
-              <div className="w-16 h-16 mx-auto bg-ecogreen rounded-full flex items-center justify-center mb-4">
-                <Leaf className="h-8 w-8 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Écologique</h3>
-              <p className="text-gray-600">
-                Réduisez votre empreinte carbone en partageant vos trajets
-              </p>
-            </div>
-
-            <div className="text-center p-6">
-              <div className="w-16 h-16 mx-auto bg-ecogreen rounded-full flex items-center justify-center mb-4">
-                <Users className="h-8 w-8 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Communautaire</h3>
-              <p className="text-gray-600">
-                Rejoignez une communauté de conducteurs responsables
-              </p>
-            </div>
-
-            <div className="text-center p-6">
-              <div className="w-16 h-16 mx-auto bg-ecogreen rounded-full flex items-center justify-center mb-4">
-                <Car className="h-8 w-8 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Économique</h3>
-              <p className="text-gray-600">
-                Partagez les frais de transport et économisez sur vos déplacements
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            <div>
-              <img
-                src="/photo-1721322800607-8c38375eef04"
-                alt="Covoiturage écologique"
-                className="rounded-lg shadow-lg w-full h-auto"
-              />
-            </div>
-            <div className="space-y-4">
-              <h3 className="text-2xl font-bold text-gray-900">
-                Notre Mission
-              </h3>
-              <p className="text-gray-600">
-                Chez EcoRide, nous croyons en un avenir où les déplacements sont plus respectueux de l'environnement. 
-                Notre plateforme met en relation des conducteurs et des passagers partageant les mêmes valeurs écologiques.
-              </p>
-              <p className="text-gray-600">
-                En choisissant EcoRide, vous participez activement à la réduction des émissions de CO2 
-                tout en profitant d'une solution de transport économique et conviviale.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-      
-      {/* Search Results */}
-      <section className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-        <SearchResults 
-          rides={rides}
-          showNoResults={!!searchParams}
-          nextAvailableDate={nextAvailableRide ? new Date(nextAvailableRide.departure_date) : undefined}
-          onDateChange={handleDateChange}
-        />
-      </section>
-
-      <HowItWorks />
+        <HowItWorks />
+      </main>
       <Footer />
     </div>
   );
