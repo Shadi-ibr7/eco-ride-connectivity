@@ -132,11 +132,11 @@ const Rides = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-grass-50/30">
       <Navbar />
       
       <main className="flex-grow">
-        <section className="bg-gradient-to-br from-ecogreen to-ecogreen-light py-12">
+        <section className="bg-gradient-to-br from-grass-600 to-grass-500 py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center text-white mb-8">
               <h1 className="text-4xl font-bold">Trouvez votre covoiturage</h1>
@@ -160,7 +160,7 @@ const Rides = () => {
             />
           ) : (
             <>
-              <h2 className="text-2xl font-semibold mb-6">Prochains trajets disponibles</h2>
+              <h2 className="text-2xl font-semibold mb-6 text-grass-900">Prochains trajets disponibles</h2>
               <SearchResults 
                 rides={upcomingRides}
                 showNoResults={false}
