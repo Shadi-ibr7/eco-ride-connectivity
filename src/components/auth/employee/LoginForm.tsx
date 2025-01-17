@@ -23,12 +23,15 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
       const normalizedEmail = email.toLowerCase().trim();
       console.log("Checking authorization for email:", normalizedEmail);
       
-      // Use ilike for case-insensitive comparison
+      // First, check if the email exists in authorized_employees
       const { data: employeeData, error: employeeError } = await supabase
         .from("authorized_employees")
-        .select("email")
+        .select("*")
         .ilike("email", normalizedEmail)
         .maybeSingle();
+
+      console.log("Employee data:", employeeData);
+      console.log("Employee error:", employeeError);
 
       if (employeeError) {
         console.error("Error checking employee authorization:", employeeError);
@@ -63,6 +66,16 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
 
       // Check if this is a temporary password login
       const isTemporary = authData.user?.user_metadata?.is_temporary_password || false;
+
+      // Update the user's role to 'employee' if not already set
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ role: "employee" })
+        .eq("id", authData.user.id);
+
+      if (updateError) {
+        console.error("Error updating user role:", updateError);
+      }
 
       toast.success("Connexion réussie !");
       
