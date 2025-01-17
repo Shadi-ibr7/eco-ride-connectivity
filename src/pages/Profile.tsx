@@ -2,22 +2,15 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { CreateRideForm } from "@/components/CreateRideForm";
 import { EditRideForm } from "@/components/EditRideForm";
 import { RoleSelector } from "@/components/RoleSelector";
-import { VehicleForm } from "@/components/VehicleForm";
-import { DriverPreferences } from "@/components/DriverPreferences";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Pencil, Trash } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Database } from "@/integrations/supabase/types";
+import { UserHeader } from "@/components/profile/UserHeader";
+import { UserRides } from "@/components/profile/UserRides";
+import { PreferencesSection } from "@/components/profile/PreferencesSection";
 
 type UserRole = Database['public']['Enums']['user_role'];
 
@@ -112,22 +105,12 @@ const Profile = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold">Mon Profil</h1>
-          <div className="space-x-4">
-            {isDriver && (
-              <Button 
-                onClick={() => setShowForm(!showForm)}
-                variant="outline"
-              >
-                {showForm ? "Voir mes annonces" : "Publier une annonce"}
-              </Button>
-            )}
-            <Button onClick={handleLogout} variant="outline">
-              Déconnexion
-            </Button>
-          </div>
-        </div>
+        <UserHeader
+          onLogout={handleLogout}
+          showForm={showForm}
+          setShowForm={setShowForm}
+          isDriver={isDriver}
+        />
 
         <div className="grid gap-6">
           <Card>
@@ -142,33 +125,7 @@ const Profile = () => {
             </CardContent>
           </Card>
 
-          {isDriver && (
-            <>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Véhicule</CardTitle>
-                  <CardDescription>
-                    Ajoutez les informations de votre véhicule
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <VehicleForm />
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Préférences</CardTitle>
-                  <CardDescription>
-                    Définissez vos préférences pour les trajets
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <DriverPreferences />
-                </CardContent>
-              </Card>
-            </>
-          )}
+          <PreferencesSection isDriver={isDriver} />
 
           {showForm ? (
             <Card>
@@ -183,66 +140,11 @@ const Profile = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-xl font-semibold mb-4">Mes Annonces</h2>
-                {userRides.length === 0 ? (
-                  <p className="text-muted-foreground">
-                    Vous n'avez pas encore publié d'annonces.
-                  </p>
-                ) : (
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {userRides.map((ride) => (
-                      <Card key={ride.id}>
-                        <CardHeader>
-                          <CardTitle className="text-lg">
-                            {ride.departure_city} → {ride.arrival_city}
-                          </CardTitle>
-                          <CardDescription>
-                            {new Date(ride.departure_date).toLocaleString("fr-FR")}
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-2">
-                            <p className="text-muted-foreground">
-                              Prix: {ride.price}€
-                            </p>
-                            <p className="text-muted-foreground">
-                              Places disponibles: {ride.seats_available}
-                            </p>
-                            {ride.description && (
-                              <p className="text-muted-foreground">
-                                {ride.description}
-                              </p>
-                            )}
-                            <div className="flex gap-2 mt-4">
-                              <Button
-                                onClick={() => setEditingRide(ride)}
-                                variant="outline"
-                                size="sm"
-                                className="flex-1"
-                              >
-                                <Pencil className="w-4 h-4 mr-2" />
-                                Modifier
-                              </Button>
-                              <Button
-                                onClick={() => handleDeleteRide(ride.id)}
-                                variant="destructive"
-                                size="sm"
-                                className="flex-1"
-                              >
-                                <Trash className="w-4 h-4 mr-2" />
-                                Supprimer
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            <UserRides
+              rides={userRides}
+              onEdit={setEditingRide}
+              onDelete={handleDeleteRide}
+            />
           )}
 
           {editingRide && (
