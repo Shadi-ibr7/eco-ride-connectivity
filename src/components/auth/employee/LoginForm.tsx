@@ -21,12 +21,13 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
 
     try {
       const normalizedEmail = email.toLowerCase().trim();
+      console.log("Checking authorization for email:", normalizedEmail);
       
-      // First, check if the email exists in authorized_employees
+      // Use ilike for case-insensitive comparison
       const { data: employeeData, error: employeeError } = await supabase
         .from("authorized_employees")
         .select("email")
-        .eq("email", normalizedEmail)
+        .ilike("email", normalizedEmail)
         .maybeSingle();
 
       if (employeeError) {
@@ -43,6 +44,8 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
         return;
       }
 
+      console.log("Email is authorized, proceeding with login");
+
       // If email is authorized, proceed with login
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: normalizedEmail,
@@ -55,6 +58,8 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
         setIsLoading(false);
         return;
       }
+
+      console.log("Login successful, checking temporary password status");
 
       // Check if this is a temporary password login
       const isTemporary = authData.user?.user_metadata?.is_temporary_password || false;
