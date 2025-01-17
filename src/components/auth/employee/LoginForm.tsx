@@ -18,6 +18,8 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
     setIsLoading(true);
 
     try {
+      console.log("Checking authorization for email:", email.toLowerCase());
+      
       // First, check if the email is authorized
       const { data: employee, error: employeeError } = await supabase
         .from("authorized_employees")
@@ -32,15 +34,20 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
         return;
       }
 
+      console.log("Authorization check result:", employee);
+
       if (!employee) {
+        console.log("Email not authorized:", email.toLowerCase());
         toast.error("Cet email n'est pas autorisé à accéder à l'espace employé");
         setIsLoading(false);
         return;
       }
 
+      console.log("Email authorized, proceeding with login");
+
       // Proceed with login
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.toLowerCase(),
         password,
       });
 
@@ -58,6 +65,7 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
       const { data: metadata } = await supabase.auth.getUser();
       const isTemporary = metadata.user?.user_metadata?.is_temporary_password;
 
+      console.log("Login successful, isTemporary:", isTemporary);
       onLoginSuccess(password, isTemporary);
     } catch (error) {
       console.error("Error during login:", error);
