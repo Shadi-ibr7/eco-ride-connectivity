@@ -24,9 +24,18 @@ export default {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
-        ecogreen: {
-          DEFAULT: "#2F5233",
-          light: "#7EA172",
+        grass: {
+          50: "hsl(137, 59%, 95%)",
+          100: "hsl(137, 52%, 90%)",
+          200: "hsl(137, 47%, 85%)",
+          300: "hsl(137, 43%, 76%)",
+          400: "hsl(137, 38%, 63%)",
+          500: "hsl(137, 35%, 50%)",
+          600: "hsl(137, 41%, 41%)",
+          700: "hsl(137, 46%, 32%)",
+          800: "hsl(137, 54%, 28%)",
+          900: "hsl(137, 72%, 15%)",
+          950: "hsl(137, 72%, 5%)",
         },
         primary: {
           DEFAULT: "hsl(var(--primary))",
