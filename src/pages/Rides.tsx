@@ -132,7 +132,7 @@ const Rides = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-grass-50/30">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-grass-50/50 to-white">
       <Navbar />
       
       <main className="flex-grow">
