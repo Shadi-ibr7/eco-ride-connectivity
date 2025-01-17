@@ -8,7 +8,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
-  const [searchResults, setSearchResults] = useState(null);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showNoResults, setShowNoResults] = useState(false);
   const navigate = useNavigate();
 
   const handleSearch = async (searchParams: any) => {
@@ -27,9 +28,12 @@ const Index = () => {
       }
 
       const data = await response.json();
-      setSearchResults(data);
+      setSearchResults(data.rides || []);
+      setShowNoResults(true);
     } catch (error) {
       console.error('Search error:', error);
+      setSearchResults([]);
+      setShowNoResults(true);
     }
   };
 
@@ -67,7 +71,12 @@ const Index = () => {
 
         <div className="mx-auto max-w-7xl px-6 lg:px-8 mb-12">
           <SearchForm onSearch={handleSearch} />
-          {searchResults && <SearchResults results={searchResults} />}
+          {searchResults && (
+            <SearchResults 
+              rides={searchResults} 
+              showNoResults={showNoResults}
+            />
+          )}
         </div>
 
         <HowItWorks />
