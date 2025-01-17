@@ -23,33 +23,36 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
       const normalizedEmail = email.toLowerCase().trim();
       console.log("Checking authorization for email:", normalizedEmail);
       
-      // First, check if the email exists in authorized_employees
-      const { data: employeeData, error: employeeError } = await supabase
+      // Vérifions d'abord si l'email existe exactement dans la table
+      const { data: exactMatch, error: exactMatchError } = await supabase
         .from("authorized_employees")
         .select("*")
-        .ilike("email", normalizedEmail)
-        .maybeSingle();
-
-      console.log("Employee data:", employeeData);
-      console.log("Employee error:", employeeError);
-
-      if (employeeError) {
-        console.error("Error checking employee authorization:", employeeError);
-        toast.error("Une erreur est survenue lors de la vérification de l'autorisation");
-        setIsLoading(false);
-        return;
+        .eq("email", normalizedEmail)
+        .single();
+        
+      console.log("Exact match attempt:", exactMatch);
+      
+      // Si pas de correspondance exacte, essayons avec ilike
+      if (!exactMatch) {
+        const { data: ilikeMatch, error: ilikeError } = await supabase
+          .from("authorized_employees")
+          .select("*")
+          .ilike("email", normalizedEmail)
+          .single();
+          
+        console.log("ILIKE match attempt:", ilikeMatch);
+        
+        if (!ilikeMatch) {
+          console.log("No match found for email:", normalizedEmail);
+          toast.error("Cet email n'est pas autorisé à accéder à l'espace employé");
+          setIsLoading(false);
+          return;
+        }
       }
 
-      if (!employeeData) {
-        console.log("Email not authorized:", normalizedEmail);
-        toast.error("Cet email n'est pas autorisé à accéder à l'espace employé");
-        setIsLoading(false);
-        return;
-      }
-
+      // Si nous arrivons ici, l'email est autorisé
       console.log("Email is authorized, proceeding with login");
 
-      // If email is authorized, proceed with login
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: normalizedEmail,
         password,
@@ -64,10 +67,10 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
 
       console.log("Login successful, checking temporary password status");
 
-      // Check if this is a temporary password login
+      // Vérifier si c'est un mot de passe temporaire
       const isTemporary = authData.user?.user_metadata?.is_temporary_password || false;
 
-      // Update the user's role to 'employee' if not already set
+      // Mettre à jour le rôle de l'utilisateur
       const { error: updateError } = await supabase
         .from("profiles")
         .update({ role: "employee" })
@@ -75,6 +78,8 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
 
       if (updateError) {
         console.error("Error updating user role:", updateError);
+      } else {
+        console.log("User role updated successfully to employee");
       }
 
       toast.success("Connexion réussie !");
