@@ -22,15 +22,18 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
       const { data: employee, error: employeeError } = await supabase
         .from("authorized_employees")
         .select("email")
-        .eq("email", email)
+        .eq("email", email.toLowerCase())
         .maybeSingle();
 
       if (employeeError) {
-        throw employeeError;
+        console.error("Error checking employee authorization:", employeeError);
+        toast.error("Erreur lors de la vérification de l'autorisation");
+        setIsLoading(false);
+        return;
       }
 
       if (!employee) {
-        toast.error("Email non autorisé");
+        toast.error("Cet email n'est pas autorisé à accéder à l'espace employé");
         setIsLoading(false);
         return;
       }
