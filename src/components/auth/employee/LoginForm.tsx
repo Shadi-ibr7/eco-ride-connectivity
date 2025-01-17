@@ -28,17 +28,13 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
         .from("authorized_employees")
         .select("email")
         .eq("email", normalizedEmail)
-        .single();
+        .maybeSingle();
 
       console.log("Authorization check result:", { employee, employeeError });
 
       if (employeeError) {
         console.error("Error checking employee authorization:", employeeError);
-        if (employeeError.code === "PGRST116") {
-          toast.error("Cet email n'est pas autorisé à accéder à l'espace employé");
-        } else {
-          toast.error("Erreur lors de la vérification de l'autorisation");
-        }
+        toast.error("Erreur lors de la vérification de l'autorisation");
         setIsLoading(false);
         return;
       }
