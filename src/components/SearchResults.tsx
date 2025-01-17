@@ -68,48 +68,52 @@ export const SearchResults = ({ rides, showNoResults, nextAvailableDate, onDateC
 
   if (!showNoResults && displayRides.length === 0) {
     return (
-      <Card className="mt-8">
-        <CardContent className="p-6">
-          <p className="text-center text-gray-600">
-            Aucun trajet n'est disponible pour le moment. Revenez plus tard ou créez votre propre trajet !
-          </p>
-          <div className="text-center mt-4">
-            <Button 
-              onClick={() => navigate('/rides/create')}
-              className="bg-ecogreen hover:bg-ecogreen-light"
-            >
-              Créer un trajet
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="min-h-[60vh] bg-grass-50/50 rounded-lg p-8">
+        <Card className="mt-8">
+          <CardContent className="p-6">
+            <p className="text-center text-grass-700">
+              Aucun trajet n'est disponible pour le moment. Revenez plus tard ou créez votre propre trajet !
+            </p>
+            <div className="text-center mt-4">
+              <Button 
+                onClick={() => navigate('/rides/create')}
+                className="bg-grass-600 hover:bg-grass-700 text-white"
+              >
+                Créer un trajet
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   if (showNoResults && displayRides.length === 0 && nextAvailableDate) {
     return (
-      <Card className="mt-8">
-        <CardContent className="p-6">
-          <p className="text-center text-gray-600 mb-4">
-            Aucun trajet disponible à cette date. Le prochain trajet disponible est le :
-          </p>
-          <div className="text-center">
-            <Button 
-              onClick={() => onDateChange?.(nextAvailableDate)}
-              className="bg-ecogreen hover:bg-ecogreen-light"
-            >
-              Voir les trajets pour le {format(new Date(nextAvailableDate), "d MMMM yyyy", { locale: fr })}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="min-h-[60vh] bg-grass-50/50 rounded-lg p-8">
+        <Card className="mt-8">
+          <CardContent className="p-6">
+            <p className="text-center text-grass-700 mb-4">
+              Aucun trajet disponible à cette date. Le prochain trajet disponible est le :
+            </p>
+            <div className="text-center">
+              <Button 
+                onClick={() => onDateChange?.(nextAvailableDate)}
+                className="bg-grass-600 hover:bg-grass-700 text-white"
+              >
+                Voir les trajets pour le {format(new Date(nextAvailableDate), "d MMMM yyyy", { locale: fr })}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <div className="mt-8 space-y-4">
+    <div className="min-h-[60vh] bg-grass-50/50 rounded-lg p-8 mt-8 space-y-4">
       {displayRides.map((ride) => (
-        <Card key={ride.id} className="overflow-hidden">
+        <Card key={ride.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-200">
           <CardContent className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
               {/* Driver Info */}
@@ -118,10 +122,10 @@ export const SearchResults = ({ rides, showNoResults, nextAvailableDate, onDateC
                   <User className="h-6 w-6" />
                 </Avatar>
                 <div>
-                  <p className="font-medium">{ride.profile?.name || "Anonyme"}</p>
+                  <p className="font-medium text-grass-900">{ride.profile?.name || "Anonyme"}</p>
                   <div className="flex items-center space-x-2">
                     {ride.is_electric_car && (
-                      <div className="flex items-center text-green-600 text-sm">
+                      <div className="flex items-center text-grass-600 text-sm">
                         <Zap className="h-4 w-4 mr-1" />
                         Véhicule électrique
                       </div>
@@ -138,7 +142,7 @@ export const SearchResults = ({ rides, showNoResults, nextAvailableDate, onDateC
 
               {/* Journey Details */}
               <div className="col-span-2">
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <div className="flex items-center space-x-2 text-sm text-grass-600">
                   <Calendar className="h-4 w-4" />
                   <span>
                     {format(new Date(ride.departure_date), "d MMMM yyyy", { locale: fr })}
@@ -149,20 +153,20 @@ export const SearchResults = ({ rides, showNoResults, nextAvailableDate, onDateC
                   </span>
                 </div>
                 <div className="mt-1">
-                  <span className="font-medium">{ride.departure_city}</span>
-                  <span className="mx-2">→</span>
-                  <span className="font-medium">{ride.arrival_city}</span>
+                  <span className="font-medium text-grass-800">{ride.departure_city}</span>
+                  <span className="mx-2 text-grass-600">→</span>
+                  <span className="font-medium text-grass-800">{ride.arrival_city}</span>
                 </div>
               </div>
 
               {/* Price and Actions */}
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-2xl font-bold">{ride.price}€</p>
-                  <p className="text-sm text-gray-600">{ride.seats_available} place{ride.seats_available > 1 ? 's' : ''} disponible{ride.seats_available > 1 ? 's' : ''}</p>
+                  <p className="text-2xl font-bold text-grass-900">{ride.price}€</p>
+                  <p className="text-sm text-grass-600">{ride.seats_available} place{ride.seats_available > 1 ? 's' : ''} disponible{ride.seats_available > 1 ? 's' : ''}</p>
                 </div>
                 <Button 
-                  className="bg-ecogreen hover:bg-ecogreen-light"
+                  className="bg-grass-600 hover:bg-grass-700 text-white"
                   onClick={() => handleRideClick(ride)}
                 >
                   Détails
