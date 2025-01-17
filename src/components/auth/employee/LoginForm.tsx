@@ -18,14 +18,17 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
     setIsLoading(true);
 
     try {
-      console.log("Checking authorization for email:", email.toLowerCase());
+      const normalizedEmail = email.toLowerCase().trim();
+      console.log("Attempting login for email:", normalizedEmail);
       
       // First, check if the email is authorized
       const { data: employee, error: employeeError } = await supabase
         .from("authorized_employees")
         .select("email")
-        .eq("email", email.toLowerCase())
+        .eq("email", normalizedEmail)
         .maybeSingle();
+
+      console.log("Authorization check result:", { employee, employeeError });
 
       if (employeeError) {
         console.error("Error checking employee authorization:", employeeError);
@@ -34,42 +37,47 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
         return;
       }
 
-      console.log("Authorization check result:", employee);
-
       if (!employee) {
-        console.log("Email not authorized:", email.toLowerCase());
+        console.log("Email not found in authorized_employees table:", normalizedEmail);
         toast.error("Cet email n'est pas autorisé à accéder à l'espace employé");
         setIsLoading(false);
         return;
       }
 
-      console.log("Email authorized, proceeding with login");
+      console.log("Email authorized, proceeding with login attempt");
 
       // Proceed with login
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.toLowerCase(),
+        email: normalizedEmail,
         password,
       });
 
       if (error) {
+        console.error("Login error:", error);
         if (error.message === "Invalid login credentials") {
           toast.error("Email ou mot de passe incorrect");
         } else {
           toast.error("Erreur lors de la connexion");
         }
-        console.error("Login error:", error);
+        setIsLoading(false);
         return;
       }
+
+      console.log("Login successful, checking if password is temporary");
 
       // Check if this is a temporary password login
       const { data: metadata } = await supabase.auth.getUser();
       const isTemporary = metadata.user?.user_metadata?.is_temporary_password;
 
-      console.log("Login successful, isTemporary:", isTemporary);
+      console.log("Login completed successfully", {
+        user: metadata.user,
+        isTemporary,
+      });
+
       onLoginSuccess(password, isTemporary);
     } catch (error) {
-      console.error("Error during login:", error);
-      toast.error("Erreur lors de la connexion");
+      console.error("Unexpected error during login:", error);
+      toast.error("Une erreur inattendue s'est produite");
     } finally {
       setIsLoading(false);
     }
