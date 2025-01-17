@@ -26,16 +26,18 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
       const { data: employeeData, error: employeeError } = await supabase
         .from("authorized_employees")
         .select("email")
-        .eq("email", normalizedEmail)
-        .single();
+        .eq("email", normalizedEmail);
 
       if (employeeError) {
-        if (employeeError.code === "PGRST116") {
-          toast.error("Cet email n'est pas autorisé à accéder à l'espace employé");
-        } else {
-          console.error("Error checking employee authorization:", employeeError);
-          toast.error("Une erreur est survenue lors de la vérification de l'autorisation");
-        }
+        console.error("Error checking employee authorization:", employeeError);
+        toast.error("Une erreur est survenue lors de la vérification de l'autorisation");
+        setIsLoading(false);
+        return;
+      }
+
+      // Vérifie si l'email est autorisé
+      if (!employeeData || employeeData.length === 0) {
+        toast.error("Cet email n'est pas autorisé à accéder à l'espace employé");
         setIsLoading(false);
         return;
       }
