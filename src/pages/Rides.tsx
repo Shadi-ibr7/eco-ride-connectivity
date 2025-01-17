@@ -132,11 +132,11 @@ const Rides = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-grass-50/50 to-white">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
       
       <main className="flex-grow">
-        <section className="bg-gradient-to-br from-grass-600 to-grass-500 py-12">
+        <section className="bg-grass-600 py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center text-white mb-8">
               <h1 className="text-4xl font-bold">Trouvez votre covoiturage</h1>
