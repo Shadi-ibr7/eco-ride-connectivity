@@ -21,29 +21,24 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
 
     try {
       const normalizedEmail = email.toLowerCase().trim();
-      console.log("Checking authorization for email:", normalizedEmail);
       
       // Vérification de l'email autorisé
       const { data: employeeData, error: employeeError } = await supabase
         .from("authorized_employees")
         .select("email")
-        .eq("email", normalizedEmail);
+        .eq("email", normalizedEmail)
+        .single();
 
       if (employeeError) {
-        console.error("Error checking employee authorization:", employeeError);
-        toast.error("Une erreur est survenue lors de la vérification de l'autorisation");
+        if (employeeError.code === "PGRST116") {
+          toast.error("Cet email n'est pas autorisé à accéder à l'espace employé");
+        } else {
+          console.error("Error checking employee authorization:", employeeError);
+          toast.error("Une erreur est survenue lors de la vérification de l'autorisation");
+        }
         setIsLoading(false);
         return;
       }
-
-      if (!employeeData || employeeData.length === 0) {
-        console.log("Email not authorized:", normalizedEmail);
-        toast.error("Cet email n'est pas autorisé à accéder à l'espace employé");
-        setIsLoading(false);
-        return;
-      }
-
-      console.log("Email is authorized, proceeding with login");
 
       // Connexion avec l'email autorisé
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -58,11 +53,6 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
         return;
       }
 
-      console.log("Login successful, checking temporary password status");
-
-      // Vérification du mot de passe temporaire
-      const isTemporary = authData.user?.user_metadata?.is_temporary_password || false;
-
       // Mise à jour du rôle utilisateur
       const { error: updateError } = await supabase
         .from("profiles")
@@ -71,12 +61,14 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
 
       if (updateError) {
         console.error("Error updating user role:", updateError);
-      } else {
-        console.log("User role updated successfully to employee");
+        toast.error("Erreur lors de la mise à jour du rôle utilisateur");
+        setIsLoading(false);
+        return;
       }
 
       toast.success("Connexion réussie !");
       
+      const isTemporary = authData.user?.user_metadata?.is_temporary_password || false;
       if (isTemporary) {
         onLoginSuccess(password, true);
       } else {
