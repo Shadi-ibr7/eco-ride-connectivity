@@ -76,10 +76,11 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
         isTemporary,
       });
 
+      toast.success("Connexion réussie !");
+      
       if (isTemporary) {
         onLoginSuccess(password, isTemporary);
       } else {
-        toast.success("Connexion réussie !");
         navigate("/employee");
       }
     } catch (error) {
