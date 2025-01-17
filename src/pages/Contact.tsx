@@ -18,8 +18,6 @@ const Contact = () => {
     setIsSubmitting(true);
 
     try {
-      // Here you would typically send the form data to your backend
-      // For now, we'll just simulate a successful submission
       await new Promise(resolve => setTimeout(resolve, 1000));
       toast.success("Message envoyé avec succès !");
       setName("");
@@ -33,22 +31,22 @@ const Contact = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-grass-50">
       <Navbar />
       
       <main className="flex-grow py-12">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
-            <Mail className="mx-auto h-12 w-12 text-ecogreen" />
-            <h1 className="mt-4 text-3xl font-bold">Contactez-nous</h1>
-            <p className="mt-2 text-gray-600">
+            <Mail className="mx-auto h-12 w-12 text-grass-600" />
+            <h1 className="mt-4 text-3xl font-bold text-grass-900">Contactez-nous</h1>
+            <p className="mt-2 text-grass-700">
               Une question ? N'hésitez pas à nous contacter !
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="name" className="block text-sm font-medium text-grass-700">
                 Nom
               </label>
               <Input
@@ -62,7 +60,7 @@ const Contact = () => {
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-grass-700">
                 Email
               </label>
               <Input
@@ -76,7 +74,7 @@ const Contact = () => {
             </div>
 
             <div>
-              <label htmlFor="message" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="message" className="block text-sm font-medium text-grass-700">
                 Message
               </label>
               <Textarea
@@ -90,7 +88,7 @@ const Contact = () => {
 
             <Button
               type="submit"
-              className="w-full bg-ecogreen hover:bg-ecogreen-light"
+              className="w-full bg-grass-600 hover:bg-grass-700 text-white"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Envoi en cours..." : "Envoyer"}
