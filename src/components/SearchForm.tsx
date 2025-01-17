@@ -45,7 +45,7 @@ export const SearchForm = ({ onSearch }: SearchFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+    <form onSubmit={handleSubmit} className="w-full max-w-4xl mx-auto p-6 bg-background rounded-lg shadow-lg">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="relative">
           <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
@@ -92,14 +92,14 @@ export const SearchForm = ({ onSearch }: SearchFormProps) => {
         >
           {showFilters ? "Masquer les filtres" : "Afficher les filtres"}
         </Button>
-        <Button type="submit" className="bg-ecogreen hover:bg-ecogreen-light px-8">
+        <Button type="submit">
           <Search className="mr-2 h-4 w-4" />
           Rechercher
         </Button>
       </div>
 
       {showFilters && (
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 rounded-lg">
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-muted rounded-lg">
           {/* Electric car filter */}
           <div className="flex items-center space-x-2">
             <Switch
@@ -108,7 +108,7 @@ export const SearchForm = ({ onSearch }: SearchFormProps) => {
               onCheckedChange={setElectricOnly}
             />
             <Label htmlFor="electric-mode" className="flex items-center">
-              <Zap className="mr-2 h-4 w-4 text-green-600" />
+              <Zap className="mr-2 h-4 w-4 text-primary" />
               Véhicules électriques uniquement
             </Label>
           </div>
