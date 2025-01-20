@@ -6,6 +6,8 @@ import { Footer } from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Index = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -14,24 +16,42 @@ const Index = () => {
 
   const handleSearch = async (searchParams: any) => {
     try {
-      const baseUrl = window.location.origin;
-      const response = await fetch(`${baseUrl}/api/search`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(searchParams),
-      });
+      let query = supabase
+        .from('rides')
+        .select('*')
+        .eq('status', 'pending');
 
-      if (!response.ok) {
-        throw new Error('Search failed');
+      if (searchParams.departureCity) {
+        query = query.ilike('departure_city', `%${searchParams.departureCity}%`);
+      }
+      if (searchParams.arrivalCity) {
+        query = query.ilike('arrival_city', `%${searchParams.arrivalCity}%`);
+      }
+      if (searchParams.date) {
+        const startDate = new Date(searchParams.date);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(searchParams.date);
+        endDate.setHours(23, 59, 59, 999);
+        
+        query = query.gte('departure_date', startDate.toISOString())
+                    .lte('departure_date', endDate.toISOString());
       }
 
-      const data = await response.json();
-      setSearchResults(data.rides || []);
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Search error:', error);
+        toast.error("Une erreur est survenue lors de la recherche");
+        setSearchResults([]);
+        setShowNoResults(true);
+        return;
+      }
+
+      setSearchResults(data || []);
       setShowNoResults(true);
     } catch (error) {
       console.error('Search error:', error);
+      toast.error("Une erreur est survenue lors de la recherche");
       setSearchResults([]);
       setShowNoResults(true);
     }
