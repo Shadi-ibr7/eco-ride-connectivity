@@ -34,7 +34,7 @@ export const SearchForm = ({ onSearch }: SearchFormProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (onSearch && departure && destination && date) {
+    if (onSearch) {
       onSearch(departure, destination, date, {
         electricOnly,
         maxPrice,
@@ -100,7 +100,6 @@ export const SearchForm = ({ onSearch }: SearchFormProps) => {
 
       {showFilters && (
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-muted rounded-lg">
-          {/* Electric car filter */}
           <div className="flex items-center space-x-2">
             <Switch
               id="electric-mode"
@@ -113,7 +112,6 @@ export const SearchForm = ({ onSearch }: SearchFormProps) => {
             </Label>
           </div>
 
-          {/* Max price filter */}
           <div className="space-y-2">
             <Label htmlFor="max-price" className="flex items-center">
               <DollarSign className="mr-2 h-4 w-4" />
@@ -129,7 +127,6 @@ export const SearchForm = ({ onSearch }: SearchFormProps) => {
             />
           </div>
 
-          {/* Max duration filter */}
           <div className="space-y-2">
             <Label htmlFor="max-duration" className="flex items-center">
               <Clock className="mr-2 h-4 w-4" />
@@ -145,7 +142,6 @@ export const SearchForm = ({ onSearch }: SearchFormProps) => {
             />
           </div>
 
-          {/* Min rating filter */}
           <div className="space-y-2">
             <Label htmlFor="min-rating" className="flex items-center">
               <Star className="mr-2 h-4 w-4 text-yellow-400" />

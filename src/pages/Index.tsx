@@ -14,27 +14,45 @@ const Index = () => {
   const [showNoResults, setShowNoResults] = useState(false);
   const navigate = useNavigate();
 
-  const handleSearch = async (searchParams: any) => {
+  const handleSearch = async (
+    departureCity: string,
+    arrivalCity: string,
+    date: string,
+    filters: {
+      electricOnly: boolean;
+      maxPrice: number | null;
+      maxDuration: number | null;
+      minRating: number | null;
+    }
+  ) => {
     try {
       let query = supabase
         .from('rides')
-        .select('*')
+        .select('*, profile:profiles(*)')
         .eq('status', 'pending');
 
-      if (searchParams.departureCity) {
-        query = query.ilike('departure_city', `%${searchParams.departureCity}%`);
+      if (departureCity) {
+        query = query.ilike('departure_city', `%${departureCity}%`);
       }
-      if (searchParams.arrivalCity) {
-        query = query.ilike('arrival_city', `%${searchParams.arrivalCity}%`);
+      if (arrivalCity) {
+        query = query.ilike('arrival_city', `%${arrivalCity}%`);
       }
-      if (searchParams.date) {
-        const startDate = new Date(searchParams.date);
+      if (date) {
+        const startDate = new Date(date);
         startDate.setHours(0, 0, 0, 0);
-        const endDate = new Date(searchParams.date);
+        const endDate = new Date(date);
         endDate.setHours(23, 59, 59, 999);
         
         query = query.gte('departure_date', startDate.toISOString())
                     .lte('departure_date', endDate.toISOString());
+      }
+
+      // Apply filters
+      if (filters.electricOnly) {
+        query = query.eq('is_electric_car', true);
+      }
+      if (filters.maxPrice) {
+        query = query.lte('price', filters.maxPrice);
       }
 
       const { data, error } = await query;
